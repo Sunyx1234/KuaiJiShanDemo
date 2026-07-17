@@ -20,8 +20,8 @@ const detailTrend = computed(() => ({
   <section class="scene">
     <div class="scene__vignette" />
     <img src="/assets/factory-main.png" alt="正泰集团厂区数字孪生主场景" class="scene__image" />
-    <button v-for="marker in store.visibleMarkers" :key="marker.id" class="scene-marker" :class="[`tone-${marker.tone}`, { selected: store.selectedMarker?.id === marker.id }]" :style="{ left: `${marker.x}%`, top: `${marker.y}%` }" @click="store.selectedMarker = marker">
-      <span class="marker-pulse" /><strong>{{ marker.name }}</strong><small>{{ marker.sub }}</small>
+    <button v-for="marker in store.visibleMarkers" :key="marker.id" class="scene-marker" :class="[`tone-${marker.tone}`, { selected: store.selectedMarker?.id === marker.id }]" :style="{ left: `${marker.x}%`, top: `${marker.y}%` }" :aria-label="`${marker.name}：${marker.sub}`" @click="store.selectedMarker = marker">
+      <span class="marker-pulse" /><span class="marker-label"><strong>{{ marker.name }}</strong><small>{{ marker.sub }}</small></span>
     </button>
     <div class="compass"><b>N</b><i>▲</i><span>3D</span></div>
     <nav class="layer-bar">

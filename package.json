@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
-    "build": "vue-tsc --noEmit -p tsconfig.app.json && vite build && node scripts/postbuild.mjs",
+    "build": "vue-tsc --noEmit -p tsconfig.app.json && vite build",
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {

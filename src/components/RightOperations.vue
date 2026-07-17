@@ -11,17 +11,17 @@ const alertDialogVisible = computed({
 })
 const riskOption = computed(() => ({
   tooltip: { trigger: 'item' },
-  series: [{ type: 'pie', radius: ['57%', '75%'], center: ['34%', '52%'], label: { show: false }, data: [
+  series: [{ type: 'pie', radius: [44, 59], center: ['50%', '50%'], label: { show: false }, data: [
     { value: 18, name: '高风险', itemStyle: { color: '#e44f56' } }, { value: 54, name: '中风险', itemStyle: { color: '#f2ad41' } }, { value: 86, name: '低风险', itemStyle: { color: '#2c85f7' } },
   ]}],
-  graphic: [{ type: 'text', left: '27%', top: '40%', style: { text: '158', fill: '#c4eaff', fontSize: 25, fontWeight: 700 } }, { type: 'text', left: '24%', top: '57%', style: { text: '风险点总数', fill: '#7593af', fontSize: 10 } }]
+  graphic: [{ type: 'text', left: 'center', top: '37%', style: { text: '158', fill: '#c4eaff', fontSize: 25, fontWeight: 700 } }, { type: 'text', left: 'center', top: '56%', style: { text: '风险点总数', fill: '#7593af', fontSize: 10 } }]
 }))
 const hiddenOption = computed(() => ({
   tooltip: { trigger: 'item' },
-  series: [{ type: 'pie', radius: ['58%', '75%'], center: ['32%', '50%'], label: { show: false }, data: [
+  series: [{ type: 'pie', radius: [44, 59], center: ['50%', '50%'], label: { show: false }, data: [
     { value: 251, name: '已整改', itemStyle: { color: '#49bf88' } }, { value: 72, name: '整改中', itemStyle: { color: '#f4ad42' } }, { value: 116, name: '待整改', itemStyle: { color: '#eb5d62' } },
   ]}],
-  graphic: [{ type: 'text', left: '25%', top: '38%', style: { text: '72', fill: '#69baff', fontSize: 24, fontWeight: 700 } }, { type: 'text', left: '22%', top: '55%', style: { text: '整改中', fill: '#7694b1', fontSize: 10 } }]
+  graphic: [{ type: 'text', left: 'center', top: '36%', style: { text: '72', fill: '#69baff', fontSize: 24, fontWeight: 700 } }, { type: 'text', left: 'center', top: '55%', style: { text: '整改中', fill: '#7694b1', fontSize: 10 } }]
 }))
 const peopleOption = computed(() => ({
   tooltip: { trigger: 'axis' }, grid: { left: 30, right: 10, top: 10, bottom: 18 },
@@ -50,7 +50,10 @@ const categories = ['全部', '设备', '人员', '环境', '其他']
       </div>
       <div class="alert-list">
         <button v-for="alert in store.filteredAlerts" :key="alert.id" :class="`tone-${alert.level}`" @click="store.locateAlert(alert)">
-          <i>!</i><span><b>{{ alert.content }}</b><small>{{ alert.area }} · {{ alert.status }}</small></span><time>{{ alert.time }}</time>
+          <i>!</i>
+          <span class="alert-content"><b>{{ alert.content }}</b><small>{{ alert.category }}告警</small></span>
+          <span class="alert-location"><b>{{ alert.area }}</b><small>{{ alert.status }}</small></span>
+          <time>{{ alert.time }}</time>
         </button>
       </div>
     </HudPanel>

@@ -1,43 +1,70 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { cameraFeeds } from '../data/mock'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import HudPanel from './HudPanel.vue'
+import { useDashboardStore } from '../stores/dashboard'
 
-const activeCamera = ref<(typeof cameraFeeds)[number] | null>(null)
-const cameraDialogVisible = computed({
-  get: () => Boolean(activeCamera.value),
-  set: (value: boolean) => { if (!value) activeCamera.value = null },
-})
-const now = new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(new Date())
-const resources = [{ icon: '▣', name: '消防器材', count: 245 }, { icon: '▰', name: '应急车辆', count: 12 }, { icon: '♟', name: '应急人员', count: 56 }, { icon: '✚', name: '医疗物资', count: 328 }]
+const store = useDashboardStore()
+const now = ref(formatTime(new Date()))
+let timer = 0
+function formatTime(date: Date) {
+  return new Intl.DateTimeFormat('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).format(date)
+}
+onMounted(() => { timer = window.setInterval(() => { now.value = formatTime(new Date()) }, 1000) })
+onBeforeUnmount(() => clearInterval(timer))
+
+const visitorMetrics = [
+  { label: '当前在厂访客', value: '86', unit: '人', tone: 'normal', note: '已完成定位授权' },
+  { label: '今日实际入厂', value: '142', unit: '人', tone: 'info', note: '预约到访 156 人' },
+  { label: '超时滞留', value: '3', unit: '人', tone: 'warning', note: '最长超时 42 分钟' },
+  { label: '限制区告警', value: '1', unit: '起', tone: 'critical', note: '已通知区域负责人' },
+  { label: '定位标签失联', value: '2', unit: '个', tone: 'warning', note: '正在重新建立连接' },
+]
+
+const visitorActivities = [
+  { name: '王　磊', company: '浙江华电科技', destination: '能源中心', status: '入厂', time: '16:42:18' },
+  { name: '李　敏', company: '苏州智造装备', destination: '1#生产车间', status: '在访', time: '16:31:06' },
+  { name: '周建国', company: '上海电气服务', destination: '中央控制室', status: '在访', time: '16:18:42' },
+]
+
+const visitorExceptions = [
+  { code: 'V20260717-036', content: '访客进入危化品仓库限制区域', person: '陈凯', tone: 'critical', time: '16:39:25' },
+  { code: 'V20260717-028', content: '访客超出预约离厂时间', person: '张森', tone: 'warning', time: '16:27:14' },
+  { code: 'V20260717-019', content: '访客定位标签信号中断', person: '刘杰', tone: 'warning', time: '16:08:53' },
+]
 </script>
 
 <template>
-  <section class="bottom-dock">
-    <HudPanel title="实时监控" class="monitor-panel">
-      <div class="camera-row">
-        <button v-for="feed in cameraFeeds" :key="feed.name" class="camera-card" @click="activeCamera = feed">
-          <span class="camera-image" :style="{ backgroundPosition: feed.pos }"><time>{{ now }}</time><i v-if="feed.alarm">AI告警</i></span>
-          <b>{{ feed.name }}</b><small><em :class="`tone-${feed.tone}`" />在线 · {{ feed.area }}</small>
-        </button>
+  <section class="bottom-dock visitor-control-dock" role="button" tabindex="0" aria-label="进入访客定位管理"
+    @click="store.enterVisitorManagement" @keydown.enter="store.enterVisitorManagement">
+    <HudPanel title="访客实时管控" class="visitor-control-panel">
+      <template #actions>
+        <span class="visitor-live"><i />实时更新 {{ now }}</span>
+      </template>
+      <div class="visitor-kpi-row">
+        <article v-for="item in visitorMetrics" :key="item.label" :class="`tone-${item.tone}`">
+          <span>{{ item.label }}</span>
+          <strong>{{ item.value }}<small>{{ item.unit }}</small></strong>
+          <em>{{ item.note }}</em>
+        </article>
+      </div>
+      <div class="visitor-detail-grid">
+        <section class="visitor-activity">
+          <header><b>最新访客动态</b><span>人员 / 来访单位 / 到访区域</span></header>
+          <div v-for="item in visitorActivities" :key="`${item.name}-${item.time}`">
+            <strong>{{ item.name }}</strong><span>{{ item.company }}</span><span>{{ item.destination }}</span>
+            <em>{{ item.status }}</em><time>{{ item.time }}</time>
+          </div>
+        </section>
+        <section class="visitor-exceptions">
+          <header><b>访客异常事件</b><span>实时监测</span></header>
+          <div v-for="item in visitorExceptions" :key="item.code" :class="`tone-${item.tone}`">
+            <i>!</i>
+            <span class="exception-content"><b>{{ item.content }}</b></span>
+            <span class="exception-visitor"><b>{{ item.code }}</b><small>{{ item.person }}</small></span>
+            <time>{{ item.time }}</time>
+          </div>
+        </section>
       </div>
     </HudPanel>
-    <HudPanel title="事件处置流程" class="flow-panel">
-      <div class="event-flow">
-        <div v-for="(step, i) in ['告警触发','事件确认','处置中','处置完成']" :key="step" :class="{ current: i === 2, done: i < 2 }">
-          <i>{{ i + 1 }}</i><span><b>{{ step }}</b><small>{{ ['14:00:22','14:00:45','14:01:05','--:--:--'][i] }}</small></span>
-        </div>
-      </div>
-    </HudPanel>
-    <HudPanel title="应急资源状态" class="resource-panel">
-      <div class="resource-list">
-        <div v-for="r in resources" :key="r.name"><i>{{ r.icon }}</i><span>{{ r.name }}<b>{{ r.count }}</b></span><em>可用</em></div>
-      </div>
-    </HudPanel>
-    <el-dialog v-model="cameraDialogVisible" width="980" :title="activeCamera?.name ?? '实时监控'" class="camera-dialog">
-      <div v-if="activeCamera" class="camera-large" :style="{ backgroundPosition: activeCamera.pos }">
-        <span>LIVE</span><time>{{ now }}</time>
-      </div>
-    </el-dialog>
   </section>
 </template>

@@ -1,7 +1,7 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { AlertItem, LayerKey, NavKey, SceneMarker } from '../data/types'
-import { alerts, metricsByNav, sceneMarkers } from '../data/mock'
+import type { AiAlert, AiAlertStatus, AlertItem, LayerKey, NavKey, SceneMarker, SecurityCamera, SecurityRange, Visitor, VisitorException, VisitorExceptionStatus, VisitorScope, VisitorStatus, VisitorTrackRange } from '../data/types'
+import { aiAlerts, alerts, metricsByNav, sceneMarkers, securityCameras, visitorExceptions, visitors } from '../data/mock'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const activeNav = ref<NavKey>('overview')
@@ -12,6 +12,24 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const riskFilter = ref<'全部' | '高风险' | '中风险' | '低风险'>('全部')
   const energyType = ref<'电' | '水' | '气'>('电')
   const timeDimension = ref<'day' | 'month' | 'year'>('day')
+  const expandedCameraArea = ref<string | null>(null)
+  const selectedCamera = ref<SecurityCamera | null>(null)
+  const selectedAiAlert = ref<AiAlert | null>(null)
+  const aiAlertItems = ref<AiAlert[]>(aiAlerts.map(alert => ({ ...alert })))
+  const aiAlertStatus = ref<'全部告警' | AiAlertStatus>('全部告警')
+  const hotspotRange = ref<SecurityRange>('today')
+  const requestedVideoTime = ref(0)
+  const visitorScope = ref<VisitorScope>('当前在厂')
+  const visitorStatus = ref<'全部状态' | VisitorStatus>('全部状态')
+  const visitorAreaFilter = ref('全部区域')
+  const expandedVisitorArea = ref<string | null>(null)
+  const selectedVisitor = ref<Visitor | null>(null)
+  const selectedVisitorException = ref<VisitorException | null>(null)
+  const visitorExceptionStatus = ref<'全部' | VisitorExceptionStatus>('全部')
+  const visitorTrackRange = ref<VisitorTrackRange>('all')
+  const visitorTrackPlaying = ref(false)
+  const visitorTrackProgress = ref(100)
+  const visitorPlaybackSpeed = ref<1 | 2 | 4>(1)
 
   const metrics = computed(() => metricsByNav[activeNav.value])
   const visibleMarkers = computed(() => {
@@ -24,6 +42,46 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return list
   })
   const filteredAlerts = computed(() => alertCategory.value === '全部' ? alerts : alerts.filter(a => a.category === alertCategory.value))
+  const filteredAiAlerts = computed(() => aiAlertStatus.value === '全部告警'
+    ? aiAlertItems.value
+    : aiAlertItems.value.filter(a => a.status === aiAlertStatus.value))
+  const filteredVisitors = computed(() => visitors.filter(visitor => {
+    const scopeMatched = visitorScope.value === '全部访客'
+      || visitorScope.value === '今日入厂'
+      || (visitorScope.value === '当前在厂' && visitor.status !== '已离厂')
+      || (visitorScope.value === '今日已离厂' && visitor.status === '已离厂')
+      || (visitorScope.value === '异常访客' && !['正常', '已离厂'].includes(visitor.status))
+    const statusMatched = visitorStatus.value === '全部状态' || visitor.status === visitorStatus.value
+    const areaMatched = visitorAreaFilter.value === '全部区域' || visitor.areaId === visitorAreaFilter.value
+    return scopeMatched && statusMatched && areaMatched
+  }))
+  const filteredVisitorExceptions = computed(() => visitorExceptionStatus.value === '全部'
+    ? visitorExceptions
+    : visitorExceptions.filter(item => item.status === visitorExceptionStatus.value))
+  const activeVisitorTrack = computed(() => {
+    const track = selectedVisitor.value?.track ?? []
+    const countMap: Record<VisitorTrackRange, number> = { '30m': 2, '1h': 3, '2h': 4, all: track.length }
+    return track.slice(-countMap[visitorTrackRange.value])
+  })
+  const visitorTrackCursor = computed(() => {
+    const track = activeVisitorTrack.value
+    if (!track.length) return null
+    if (track.length === 1) return track[0]
+    const position = Math.min(1, Math.max(0, visitorTrackProgress.value / 100)) * (track.length - 1)
+    const fromIndex = Math.min(track.length - 2, Math.floor(position))
+    const ratio = position - fromIndex
+    const from = track[fromIndex]
+    const to = track[fromIndex + 1]
+    return {
+      ...from,
+      id: `${from.id}-${to.id}`,
+      x: from.x + (to.x - from.x) * ratio,
+      y: from.y + (to.y - from.y) * ratio,
+      time: ratio < 0.5 ? from.time : to.time,
+      event: ratio < 1 ? from.event : to.event,
+      area: ratio < 0.5 ? from.area : to.area,
+    }
+  })
 
   function locateAlert(alert: AlertItem) {
     selectedAlert.value = alert
@@ -31,5 +89,66 @@ export const useDashboardStore = defineStore('dashboard', () => {
     activeLayer.value = 'overview'
   }
 
-  return { activeNav, activeLayer, selectedMarker, selectedAlert, alertCategory, riskFilter, energyType, timeDimension, metrics, visibleMarkers, filteredAlerts, locateAlert }
+  function openCamera(camera: SecurityCamera, alert: AiAlert | null = null) {
+    expandedCameraArea.value = camera.areaId
+    selectedCamera.value = camera
+    selectedAiAlert.value = alert
+    requestedVideoTime.value = alert?.videoTime ?? 0
+  }
+
+  function locateAiAlert(alert: AiAlert) {
+    const camera = securityCameras.find(item => item.id === alert.cameraId)
+    if (camera) openCamera(camera, alert)
+  }
+
+  function closeCamera() {
+    selectedCamera.value = null
+    selectedAiAlert.value = null
+    requestedVideoTime.value = 0
+  }
+
+  function processAiAlert(action: 'dismiss' | 'notify') {
+    if (!selectedAiAlert.value || selectedAiAlert.value.status !== '待确认') return
+    selectedAiAlert.value.status = action === 'dismiss' ? '已处理' : '处理中'
+    selectedAiAlert.value.assignee = action === 'dismiss' ? '系统归档' : '张伟'
+  }
+
+  function enterVisitorManagement() {
+    activeNav.value = 'people'
+    visitorScope.value = '当前在厂'
+    visitorStatus.value = '全部状态'
+    visitorAreaFilter.value = '全部区域'
+  }
+
+  function selectVisitor(visitor: Visitor, exception: VisitorException | null = null) {
+    selectedVisitor.value = visitor
+    selectedVisitorException.value = exception
+    expandedVisitorArea.value = visitor.areaId
+    visitorTrackRange.value = 'all'
+    visitorTrackProgress.value = exception
+      ? Math.max(0, visitor.track.findIndex(node => node.id === exception.trackNodeId) / Math.max(visitor.track.length - 1, 1) * 100)
+      : 100
+    visitorTrackPlaying.value = false
+  }
+
+  function locateVisitorException(exception: VisitorException) {
+    const visitor = visitors.find(item => item.id === exception.visitorId)
+    if (visitor) selectVisitor(visitor, exception)
+  }
+
+  function exitVisitorTrack() {
+    selectedVisitor.value = null
+    selectedVisitorException.value = null
+    visitorTrackPlaying.value = false
+    visitorTrackProgress.value = 100
+  }
+
+  return {
+    activeNav, activeLayer, selectedMarker, selectedAlert, alertCategory, riskFilter, energyType, timeDimension,
+    expandedCameraArea, selectedCamera, selectedAiAlert, aiAlertItems, aiAlertStatus, hotspotRange, requestedVideoTime,
+    visitorScope, visitorStatus, visitorAreaFilter, expandedVisitorArea, selectedVisitor, selectedVisitorException,
+    visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
+    metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
+    locateAlert, openCamera, locateAiAlert, closeCamera, processAiAlert, enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
+  }
 })

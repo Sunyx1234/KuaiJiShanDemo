@@ -1,9 +1,9 @@
-import type { AlertItem, LayerKey, Metric, NavKey, SceneMarker } from './types'
+import type { AiAlert, AiCategoryStat, AlarmHotspot, AlertItem, CameraArea, LayerKey, Metric, NavKey, SceneMarker, SecurityCamera, Visitor, VisitorArea, VisitorException } from './types'
 
 export const navItems: { key: NavKey; label: string }[] = [
   { key: 'overview', label: '综合态势' },
   { key: 'device', label: '设备监测' },
-  { key: 'energy', label: '能源管理' },
+  { key: 'security', label: '安全监控' },
   { key: 'people', label: '人员管理' },
   { key: 'emergency', label: '应急指挥' },
 ]
@@ -20,8 +20,22 @@ const baseMetrics: Metric[] = [
 export const metricsByNav: Record<NavKey, Metric[]> = {
   overview: baseMetrics,
   device: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '运行设备', value: '2,114', unit: '台' } : m),
-  energy: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '今日综合能耗', value: '785', unit: 'MWh' } : m),
-  people: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '在岗人数', value: '2,521', unit: '人' } : m),
+  security: [
+    { label: '摄像头总数', value: '326', unit: '台', delta: '3.2%', positive: true, icon: 'VideoCameraFilled' },
+    { label: '摄像头在线率', value: '97.9', unit: '%', delta: '0.8%', positive: true, icon: 'Connection' },
+    { label: 'AI任务运行率', value: '96.8', unit: '%', delta: '1.4%', positive: true, icon: 'Cpu' },
+    { label: '今日AI识别事件', value: '48', unit: '条', delta: '12.5%', positive: false, icon: 'View' },
+    { label: '待处理告警', value: '7', unit: '条', delta: '22.2%', positive: false, icon: 'BellFilled' },
+    { label: '严重告警', value: '2', unit: '条', delta: '33.3%', positive: false, icon: 'WarningFilled' },
+  ],
+  people: [
+    { label: '当前在厂访客', value: '86', unit: '人', delta: '0', positive: true, icon: 'UserFilled' },
+    { label: '今日实际入厂', value: '142', unit: '人', delta: '0', positive: true, icon: 'Right' },
+    { label: '今日实际离厂', value: '56', unit: '人', delta: '0', positive: true, icon: 'Back' },
+    { label: '定位在线率', value: '97.7', unit: '%', delta: '0', positive: true, icon: 'LocationFilled' },
+    { label: '超时滞留', value: '3', unit: '人', delta: '0', positive: false, icon: 'Timer' },
+    { label: '当前异常人数', value: '6', unit: '人', delta: '0', positive: false, icon: 'WarningFilled' },
+  ],
   emergency: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '应急资源完好率', value: '99.1', unit: '%' } : m),
 }
 
@@ -82,4 +96,165 @@ export const cameraFeeds = [
   { name: '原料仓储区·西侧', area: '仓储区域', tone: 'normal', alarm: false, pos: '44% 60%' },
   { name: '污水处理站·北侧', area: '环保区域', tone: 'normal', alarm: false, pos: '74% 30%' },
   { name: '2#生产车间·西侧', area: '生产区域', tone: 'attention', alarm: true, pos: '52% 34%' },
+]
+
+export const securityCameraAreas: CameraArea[] = [
+  { id: 'east-gate', name: '东门及访客区', x: 82, y: 43 },
+  { id: 'workshop-1', name: '1#生产车间', x: 35, y: 46 },
+  { id: 'workshop-2', name: '2#生产车间', x: 54, y: 34 },
+  { id: 'hazmat', name: '危险品仓库', x: 66, y: 55 },
+  { id: 'warehouse', name: '原料仓储区', x: 49, y: 66 },
+  { id: 'water', name: '污水处理站', x: 76, y: 30 },
+]
+
+export const securityCameras: SecurityCamera[] = [
+  { id: 'cam-e01', name: '东门入口枪机 E01', areaId: 'east-gate', area: '东门及访客区', x: 80.5, y: 41, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, posterPosition: '82% 43%' },
+  { id: 'cam-e02', name: '访客通道球机 E02', areaId: 'east-gate', area: '东门及访客区', x: 84, y: 45.5, status: 'offline', algorithms: ['安全帽'], alertCount: 0, posterPosition: '79% 46%' },
+  { id: 'cam-w11', name: '1#车间东侧 W11', areaId: 'workshop-1', area: '1#生产车间', x: 32.5, y: 44, status: 'alarm', algorithms: ['危险作业', '安全帽', '反光衣'], alertCount: 2, posterPosition: '31% 44%' },
+  { id: 'cam-w12', name: '1#车间装配线 W12', areaId: 'workshop-1', area: '1#生产车间', x: 37.5, y: 48, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, posterPosition: '37% 47%' },
+  { id: 'cam-w21', name: '2#车间西侧 W21', areaId: 'workshop-2', area: '2#生产车间', x: 51.5, y: 31.5, status: 'abnormal', algorithms: ['烟雾', '危险作业'], alertCount: 0, posterPosition: '52% 34%' },
+  { id: 'cam-w22', name: '2#车间通道 W22', areaId: 'workshop-2', area: '2#生产车间', x: 57, y: 36.5, status: 'online', algorithms: ['安全帽'], alertCount: 0, posterPosition: '57% 36%' },
+  { id: 'cam-h01', name: '危化品库南侧 H01', areaId: 'hazmat', area: '危险品仓库', x: 63.5, y: 52, status: 'alarm', algorithms: ['明火', '烟雾'], alertCount: 3, posterPosition: '64% 52%' },
+  { id: 'cam-h02', name: '危化品库装卸区 H02', areaId: 'hazmat', area: '危险品仓库', x: 68.5, y: 57, status: 'online', algorithms: ['明火', '危险作业'], alertCount: 0, posterPosition: '69% 57%' },
+  { id: 'cam-r01', name: '原料库西侧 R01', areaId: 'warehouse', area: '原料仓储区', x: 46.5, y: 64, status: 'online', algorithms: ['明火', '反光衣'], alertCount: 0, posterPosition: '45% 63%' },
+  { id: 'cam-r02', name: '原料库通道 R02', areaId: 'warehouse', area: '原料仓储区', x: 52, y: 68, status: 'alarm', algorithms: ['烟雾', '安全帽'], alertCount: 1, posterPosition: '52% 67%' },
+  { id: 'cam-s01', name: '污水站北侧 S01', areaId: 'water', area: '污水处理站', x: 73.5, y: 28, status: 'online', algorithms: ['危险作业', '反光衣'], alertCount: 0, posterPosition: '74% 30%' },
+  { id: 'cam-s02', name: '污水站池区 S02', areaId: 'water', area: '污水处理站', x: 78.5, y: 32.5, status: 'online', algorithms: ['危险作业'], alertCount: 0, posterPosition: '79% 32%' },
+]
+
+export const aiCategoryStats: AiCategoryStat[] = [
+  { name: '明火', value: 5, color: '#ef515c' },
+  { name: '烟雾', value: 8, color: '#f48648' },
+  { name: '危险作业', value: 13, color: '#f2ae42' },
+  { name: '安全帽', value: 14, color: '#2aa9ff' },
+  { name: '反光衣', value: 8, color: '#45d799' },
+]
+
+export const alarmHotspots: AlarmHotspot[] = [
+  { cameraId: 'cam-h01', name: '危化品库南侧 H01', area: '危险品仓库', category: '明火', counts: { today: 6, '7d': 31, '30d': 108 } },
+  { cameraId: 'cam-w11', name: '1#车间东侧 W11', area: '1#生产车间', category: '危险作业', counts: { today: 5, '7d': 27, '30d': 92 } },
+  { cameraId: 'cam-r02', name: '原料库通道 R02', area: '原料仓储区', category: '安全帽', counts: { today: 4, '7d': 22, '30d': 77 } },
+  { cameraId: 'cam-w21', name: '2#车间西侧 W21', area: '2#生产车间', category: '烟雾', counts: { today: 3, '7d': 18, '30d': 63 } },
+  { cameraId: 'cam-e01', name: '东门入口枪机 E01', area: '东门及访客区', category: '反光衣', counts: { today: 2, '7d': 13, '30d': 48 } },
+]
+
+export const aiAlerts: AiAlert[] = [
+  { id: 'ai-001', orderNo: 'AI-20260717-001', cameraId: 'cam-h01', algorithm: '明火', level: '严重', content: '危化品库装卸区检测到疑似明火', area: '危险品仓库', time: '14:00:22', status: '处理中', assignee: '陈志强', snapshotPosition: '64% 52%', videoTime: 12 },
+  { id: 'ai-002', orderNo: 'AI-20260717-002', cameraId: 'cam-w11', algorithm: '危险作业', level: '关注', content: '作业人员进入设备吊装警戒区', area: '1#生产车间', time: '13:58:33', status: '待确认', assignee: '待分派', snapshotPosition: '31% 44%', videoTime: 8 },
+  { id: 'ai-003', orderNo: 'AI-20260717-003', cameraId: 'cam-r02', algorithm: '安全帽', level: '一般', content: '检测到人员未佩戴安全帽', area: '原料仓储区', time: '13:55:18', status: '待确认', assignee: '待分派', snapshotPosition: '52% 67%', videoTime: 16 },
+  { id: 'ai-004', orderNo: 'AI-20260717-004', cameraId: 'cam-h01', algorithm: '烟雾', level: '严重', content: '仓库南侧检测到烟雾扩散', area: '危险品仓库', time: '13:49:06', status: '已处理', assignee: '周海峰', snapshotPosition: '66% 54%', videoTime: 21 },
+  { id: 'ai-005', orderNo: 'AI-20260717-005', cameraId: 'cam-w21', algorithm: '烟雾', level: '关注', content: '焊接区域烟雾浓度持续升高', area: '2#生产车间', time: '13:42:51', status: '处理中', assignee: '王建国', snapshotPosition: '52% 34%', videoTime: 10 },
+  { id: 'ai-006', orderNo: 'AI-20260717-006', cameraId: 'cam-e01', algorithm: '反光衣', level: '一般', content: '访客通道人员未穿反光衣', area: '东门及访客区', time: '13:36:29', status: '已处理', assignee: '李晓明', snapshotPosition: '82% 43%', videoTime: 6 },
+]
+
+export const visitorAreas: VisitorArea[] = [
+  { id: 'visitor-workshop-1', name: '1#生产车间', x: 35, y: 46, density: '较高', total: 18, abnormal: 2 },
+  { id: 'visitor-workshop-2', name: '2#生产车间', x: 54, y: 34, density: '正常', total: 14, abnormal: 0 },
+  { id: 'visitor-office', name: '行政办公区', x: 73, y: 62, density: '正常', total: 16, abnormal: 0 },
+  { id: 'visitor-warehouse', name: '仓储物流区', x: 49, y: 66, density: '关注', total: 12, abnormal: 2 },
+  { id: 'visitor-power', name: '能源动力区', x: 67, y: 48, density: '关注', total: 15, abnormal: 2 },
+  { id: 'visitor-rd', name: '研发区域', x: 23, y: 70, density: '正常', total: 11, abnormal: 0 },
+]
+
+export const visitors: Visitor[] = [
+  {
+    id: 'v-001', name: '王磊', maskedName: '王*', company: '浙江华电科技有限公司', department: '能源管理部', host: '陈志强',
+    reason: '能源管理系统技术交流', visitorCard: 'VIS-20260717-036', uwbTag: 'UWB-V-1036', allowedAreas: ['行政办公区', '能源动力区'],
+    escortRequired: true, areaId: 'visitor-power', area: '能源动力区', floor: '室外动力区', x: 68, y: 49, status: '限制区告警',
+    visitType: '项目交流', actualEntry: '09:18:36', plannedLeave: '16:30:00', duration: '7小时45分', lastLocated: '17:03:18',
+    accessStatus: '身份核验通过 · 已入厂', tagStatus: '在线 · 3秒前',
+    track: [
+      { id: 'v1-n1', x: 84, y: 72, time: '09:18', area: '东门访客中心', event: '入厂' },
+      { id: 'v1-n2', x: 75, y: 65, time: '09:36', area: '行政办公区', event: '区域进入' },
+      { id: 'v1-n3', x: 67, y: 58, time: '11:20', area: '能源动力区', event: '区域进入' },
+      { id: 'v1-n4', x: 64, y: 51, time: '15:48', area: '动力站北侧', event: '长时间停留', stay: '38分钟' },
+      { id: 'v1-n5', x: 68, y: 49, time: '16:39', area: '能源动力区限制边界', event: '越界' },
+      { id: 'v1-n6', x: 68, y: 49, time: '17:03', area: '能源动力区', event: '当前位置' },
+    ],
+  },
+  {
+    id: 'v-002', name: '李敏', maskedName: '李*', company: '苏州智造装备有限公司', department: '生产制造部', host: '赵海峰',
+    reason: '产线设备验收', visitorCard: 'VIS-20260717-028', uwbTag: 'UWB-V-1028', allowedAreas: ['1#生产车间'],
+    escortRequired: true, areaId: 'visitor-workshop-1', area: '1#生产车间', floor: '一层装配区', x: 34, y: 47, status: '超时滞留',
+    visitType: '施工检修', actualEntry: '10:06:21', plannedLeave: '16:00:00', duration: '6小时57分', lastLocated: '17:03:16',
+    accessStatus: '身份核验通过 · 已入厂', tagStatus: '在线 · 5秒前',
+    track: [
+      { id: 'v2-n1', x: 84, y: 72, time: '10:06', area: '东门访客中心', event: '入厂' },
+      { id: 'v2-n2', x: 61, y: 67, time: '10:21', area: '厂区主干道', event: '普通移动' },
+      { id: 'v2-n3', x: 45, y: 57, time: '10:32', area: '1#生产车间东门', event: '区域进入' },
+      { id: 'v2-n4', x: 37, y: 49, time: '13:20', area: '装配线A区', event: '长时间停留', stay: '1小时12分' },
+      { id: 'v2-n5', x: 34, y: 47, time: '17:03', area: '1#生产车间', event: '当前位置' },
+    ],
+  },
+  {
+    id: 'v-003', name: '刘杰', maskedName: '刘*', company: '上海电气服务有限公司', department: '设备动力部', host: '王建国',
+    reason: '动力设备巡检', visitorCard: 'VIS-20260717-019', uwbTag: 'UWB-V-1019', allowedAreas: ['能源动力区'],
+    escortRequired: false, areaId: 'visitor-power', area: '能源动力区', floor: '循环水泵房', x: 61, y: 42, status: '定位失联',
+    visitType: '施工检修', actualEntry: '11:12:08', plannedLeave: '17:30:00', duration: '5小时51分', lastLocated: '16:48:02',
+    accessStatus: '身份核验通过 · 已入厂', tagStatus: '失联 · 15分钟前',
+    track: [
+      { id: 'v3-n1', x: 84, y: 72, time: '11:12', area: '东门访客中心', event: '入厂' },
+      { id: 'v3-n2', x: 72, y: 55, time: '11:31', area: '能源动力区南门', event: '区域进入' },
+      { id: 'v3-n3', x: 64, y: 45, time: '14:05', area: '循环水泵房', event: '普通移动' },
+      { id: 'v3-n4', x: 61, y: 42, time: '16:48', area: '循环水泵房', event: '定位中断', connected: false },
+    ],
+  },
+  {
+    id: 'v-004', name: '周建国', maskedName: '周**', company: '杭州数智工业研究院', department: '数字化中心', host: '李晓明',
+    reason: '数字孪生项目交流', visitorCard: 'VIS-20260717-042', uwbTag: 'UWB-V-1042', allowedAreas: ['行政办公区', '研发区域'],
+    escortRequired: false, areaId: 'visitor-office', area: '行政办公区', floor: 'A栋三层', x: 72, y: 64, status: '正常',
+    visitType: '项目交流', actualEntry: '13:26:45', plannedLeave: '18:00:00', duration: '3小时36分', lastLocated: '17:03:20',
+    accessStatus: '身份核验通过 · 已入厂', tagStatus: '在线 · 1秒前',
+    track: [
+      { id: 'v4-n1', x: 84, y: 72, time: '13:26', area: '东门访客中心', event: '入厂' },
+      { id: 'v4-n2', x: 76, y: 68, time: '13:38', area: '行政办公区', event: '区域进入' },
+      { id: 'v4-n3', x: 72, y: 64, time: '17:03', area: 'A栋三层会议室', event: '当前位置' },
+    ],
+  },
+  {
+    id: 'v-005', name: '张森', maskedName: '张*', company: '宁波安捷物流有限公司', department: '仓储物流部', host: '孙伟',
+    reason: '原材料配送', visitorCard: 'VIS-20260717-051', uwbTag: 'UWB-V-1051', allowedAreas: ['仓储物流区'],
+    escortRequired: false, areaId: 'visitor-warehouse', area: '仓储物流区', floor: '原料库月台', x: 50, y: 67, status: '即将超时',
+    visitType: '物流配送', actualEntry: '15:02:12', plannedLeave: '17:15:00', duration: '2小时01分', lastLocated: '17:03:17',
+    accessStatus: '车辆及人员核验通过', tagStatus: '在线 · 4秒前',
+    track: [
+      { id: 'v5-n1', x: 84, y: 72, time: '15:02', area: '东门访客中心', event: '入厂' },
+      { id: 'v5-n2', x: 66, y: 73, time: '15:18', area: '物流通道', event: '普通移动' },
+      { id: 'v5-n3', x: 52, y: 68, time: '15:26', area: '原料库月台', event: '区域进入' },
+      { id: 'v5-n4', x: 50, y: 67, time: '17:03', area: '仓储物流区', event: '当前位置' },
+    ],
+  },
+  {
+    id: 'v-006', name: '陈凯', maskedName: '陈*', company: '温州高新材料有限公司', department: '生产制造部', host: '郑涛',
+    reason: '材料工艺验证', visitorCard: 'VIS-20260717-063', uwbTag: 'UWB-V-1063', allowedAreas: ['2#生产车间'],
+    escortRequired: true, areaId: 'visitor-workshop-2', area: '2#生产车间', floor: '二层工艺区', x: 55, y: 35, status: '正常',
+    visitType: '商务访问', actualEntry: '14:18:09', plannedLeave: '17:45:00', duration: '2小时45分', lastLocated: '17:03:19',
+    accessStatus: '身份核验通过 · 已入厂', tagStatus: '在线 · 2秒前',
+    track: [
+      { id: 'v6-n1', x: 84, y: 72, time: '14:18', area: '东门访客中心', event: '入厂' },
+      { id: 'v6-n2', x: 68, y: 55, time: '14:31', area: '厂区主干道', event: '普通移动' },
+      { id: 'v6-n3', x: 58, y: 39, time: '14:43', area: '2#生产车间南门', event: '区域进入' },
+      { id: 'v6-n4', x: 55, y: 35, time: '17:03', area: '二层工艺区', event: '当前位置' },
+    ],
+  },
+  {
+    id: 'v-007', name: '赵强', maskedName: '赵*', company: '南京工业设计院', department: '研发中心', host: '吴昊',
+    reason: '实验室参观', visitorCard: 'VIS-20260717-012', uwbTag: 'UWB-V-1012', allowedAreas: ['研发区域'],
+    escortRequired: true, areaId: 'visitor-rd', area: '研发区域', floor: '研发楼二层', x: 24, y: 69, status: '已离厂',
+    visitType: '参观访问', actualEntry: '08:42:15', plannedLeave: '12:00:00', actualLeave: '11:48:36', duration: '3小时06分', lastLocated: '11:48:30',
+    accessStatus: '已离厂', tagStatus: '标签已回收',
+    track: [
+      { id: 'v7-n1', x: 84, y: 72, time: '08:42', area: '东门访客中心', event: '入厂' },
+      { id: 'v7-n2', x: 25, y: 70, time: '09:08', area: '研发区域', event: '区域进入' },
+      { id: 'v7-n3', x: 84, y: 72, time: '11:48', area: '东门访客中心', event: '离厂' },
+    ],
+  },
+]
+
+export const visitorExceptions: VisitorException[] = [
+  { id: 've-001', visitorId: 'v-001', type: '进入未授权区域', level: '严重', area: '能源动力区', time: '16:39:25', status: '处理中', content: '访客进入动力站限制边界', trackNodeId: 'v1-n5' },
+  { id: 've-002', visitorId: 'v-002', type: '超时滞留', level: '关注', area: '1#生产车间', time: '16:30:00', status: '待确认', content: '访客已超过计划离厂时间33分钟', trackNodeId: 'v2-n5' },
+  { id: 've-003', visitorId: 'v-003', type: '定位标签失联', level: '关注', area: '能源动力区', time: '16:48:02', status: '处理中', content: 'UWB标签连续15分钟无心跳', trackNodeId: 'v3-n4' },
+  { id: 've-004', visitorId: 'v-005', type: '长时间静止', level: '一般', area: '仓储物流区', time: '16:12:44', status: '已处理', content: '访客在原料库月台静止超过30分钟', trackNodeId: 'v5-n4' },
+  { id: 've-005', visitorId: 'v-001', type: '偏离活动区域', level: '一般', area: '能源动力区', time: '15:52:17', status: '已处理', content: '访客短时偏离申报访问路线', trackNodeId: 'v1-n4' },
 ]

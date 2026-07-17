@@ -1,12 +1,57 @@
 <script setup lang="ts">
 import * as Icons from '@element-plus/icons-vue'
-import { computed } from 'vue'
-import { layerItems } from '../data/mock'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { layerItems, securityCameraAreas, securityCameras, visitorAreas } from '../data/mock'
 import { useDashboardStore } from '../stores/dashboard'
 import BaseChart from './BaseChart.vue'
 
 const store = useDashboardStore()
 const iconMap = Icons as Record<string, any>
+const videoRef = ref<HTMLVideoElement | null>(null)
+const previewPlaying = ref(true)
+const previewProgress = ref(38)
+const now = ref(new Date())
+let timer = 0
+const clock = computed(() => new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric', month: '2-digit', day: '2-digit',
+  hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+}).format(now.value).replaceAll('/', '-'))
+const statusText = { online: '正常在线', offline: '设备离线', abnormal: '视频异常', alarm: '实时告警' }
+const areaSummaries = computed(() => securityCameraAreas.map(area => {
+  const cameras = securityCameras.filter(camera => camera.areaId === area.id)
+  return { ...area, cameras, alerts: cameras.reduce((sum, camera) => sum + camera.alertCount, 0) }
+}))
+const visitorAreaSummaries = computed(() => visitorAreas.map(area => {
+  const people = store.filteredVisitors.filter(visitor => visitor.areaId === area.id)
+  const isDefaultScope = store.visitorScope === '当前在厂' && store.visitorStatus === '全部状态' && store.visitorAreaFilter === '全部区域'
+  return { ...area, people, displayTotal: isDefaultScope ? area.total : people.length, displayAbnormal: isDefaultScope ? area.abnormal : people.filter(visitor => !['正常', '已离厂'].includes(visitor.status)).length }
+}).filter(area => area.displayTotal > 0))
+const visitorTrackSegments = computed(() => store.activeVisitorTrack.slice(1).map((node, index) => ({
+  from: store.activeVisitorTrack[index],
+  to: node,
+  interrupted: node.connected === false || node.event === '定位中断',
+})))
+const visitorStatusTone = (status: string) => {
+  if (status === '限制区告警') return 'critical'
+  if (status === '超时滞留') return 'warning'
+  if (status === '即将超时') return 'attention'
+  if (status === '定位失联') return 'offline'
+  return 'normal'
+}
+const selectedCameraAlerts = computed(() => store.selectedCamera
+  ? ['14:00:22 明火识别 · 处理中', '13:49:06 烟雾识别 · 已处理'].slice(0, Math.max(store.selectedCamera.alertCount, 1))
+  : [])
+onMounted(() => { timer = window.setInterval(() => now.value = new Date(), 1000) })
+onBeforeUnmount(() => clearInterval(timer))
+watch(() => store.requestedVideoTime, time => {
+  if (videoRef.value) videoRef.value.currentTime = time
+})
+function togglePreview() {
+  previewPlaying.value = !previewPlaying.value
+  if (!videoRef.value) return
+  if (previewPlaying.value) void videoRef.value.play()
+  else videoRef.value.pause()
+}
 const detailTrend = computed(() => ({
   grid: { left: 25, right: 8, top: 8, bottom: 18 },
   xAxis: { type: 'category', data: ['02','04','06','08','10','12','14','16','18','20','22','24'], axisLabel: { color: '#66849f', fontSize: 9 }, axisLine: { lineStyle: { color: '#23466a' } } },
@@ -17,19 +62,138 @@ const detailTrend = computed(() => ({
 </script>
 
 <template>
-  <section class="scene">
+  <section class="scene" :class="{ 'security-scene': store.activeNav === 'security' }" @click.self="store.expandedCameraArea = null">
     <div class="scene__vignette" />
-    <img src="/assets/factory-main.png" alt="正泰集团厂区数字孪生主场景" class="scene__image" />
-    <button v-for="marker in store.visibleMarkers" :key="marker.id" class="scene-marker" :class="[`tone-${marker.tone}`, { selected: store.selectedMarker?.id === marker.id }]" :style="{ left: `${marker.x}%`, top: `${marker.y}%` }" :aria-label="`${marker.name}：${marker.sub}`" @click="store.selectedMarker = marker">
-      <span class="marker-pulse" /><span class="marker-label"><strong>{{ marker.name }}</strong><small>{{ marker.sub }}</small></span>
-    </button>
+    <img src="/assets/factory-main.png" alt="正泰集团厂区数字孪生主场景" class="scene__image"
+      @click="store.activeNav === 'security' ? (store.expandedCameraArea = null) : store.activeNav === 'people' && !store.selectedVisitor ? (store.expandedVisitorArea = null) : null" />
+
+    <template v-if="store.activeNav === 'security'">
+      <div class="security-scan-line" />
+      <div class="security-scene-badge"><i />AI VIDEO ANALYTICS <b>全厂监控态势</b></div>
+      <template v-for="area in areaSummaries" :key="area.id">
+        <button v-if="store.expandedCameraArea !== area.id" class="camera-cluster"
+          :class="{ alarming: area.alerts > 0 }" :style="{ left: `${area.x}%`, top: `${area.y}%` }"
+          @click.stop="store.expandedCameraArea = area.id">
+          <i><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon><b>{{ area.cameras.length }}</b></i>
+          <span><strong>{{ area.name }}</strong><small>{{ area.cameras.length }} 路在线 · 告警 {{ area.alerts }}</small></span>
+        </button>
+        <button v-for="camera in area.cameras" v-else :key="camera.id" class="security-camera-marker"
+          :class="[`status-${camera.status}`, { selected: store.selectedCamera?.id === camera.id }]"
+          :style="{ left: `${camera.x}%`, top: `${camera.y}%` }" @click.stop="store.openCamera(camera)">
+          <span><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon></span>
+          <i>{{ camera.name }}</i>
+          <div>
+            <strong>{{ camera.name }}</strong>
+            <small>{{ camera.area }} · {{ statusText[camera.status] }}</small>
+            <small>AI：{{ camera.algorithms.join(' / ') }}</small>
+            <em v-if="camera.alertCount">当前告警 {{ camera.alertCount }}</em>
+          </div>
+        </button>
+      </template>
+
+      <transition name="slide">
+        <aside v-if="store.selectedCamera" class="security-video-preview">
+          <header>
+            <div><span class="live-dot" /><small>CAMERA LIVE / AI ANALYTICS</small><h3>{{ store.selectedCamera.name }}</h3></div>
+            <button @click="store.closeCamera">×</button>
+          </header>
+          <div class="security-video-frame">
+            <video v-if="store.selectedCamera.videoUrl" ref="videoRef" :src="store.selectedCamera.videoUrl"
+              autoplay controls playsinline :poster="`/assets/factory-main.png`" />
+            <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
+              :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
+              <span class="video-grid" /><b>LIVE</b><time>{{ clock }}</time>
+              <i class="tracking-box"><span>AI TRACKING</span></i>
+              <em>本地演示画面 · 视频素材待配置</em>
+            </div>
+            <div v-if="!store.selectedCamera.videoUrl" class="security-video-controls">
+              <button @click="togglePreview">{{ previewPlaying ? 'Ⅱ' : '▶' }}</button>
+              <input v-model="previewProgress" type="range" min="0" max="100" aria-label="视频进度" />
+              <time>00:{{ String(Math.round(Number(previewProgress) * .36)).padStart(2, '0') }} / 00:36</time>
+            </div>
+          </div>
+          <div class="security-camera-meta">
+            <span>所属区域<b>{{ store.selectedCamera.area }}</b></span>
+            <span>当前状态<b :class="`camera-${store.selectedCamera.status}`">{{ statusText[store.selectedCamera.status] }}</b></span>
+            <span class="wide">启用算法<b>{{ store.selectedCamera.algorithms.join('、') }}</b></span>
+          </div>
+          <section v-if="store.selectedAiAlert" class="security-linked-alert">
+            <span :class="`ai-level-${store.selectedAiAlert.level}`">{{ store.selectedAiAlert.level }}</span>
+            <div><small>{{ store.selectedAiAlert.algorithm }} · {{ store.selectedAiAlert.time }}</small><b>{{ store.selectedAiAlert.content }}</b></div>
+            <em>{{ store.selectedAiAlert.status }}</em>
+          </section>
+          <section v-if="store.selectedAiAlert?.status === '待确认'" class="security-work-order-actions">
+            <div>
+              <small>告警工单待确认</small>
+              <b>请选择处置方式，处理结果将同步更新告警状态</b>
+            </div>
+            <button class="dismiss" @click="store.processAiAlert('dismiss')">消除告警</button>
+            <button class="notify" @click="store.processAiAlert('notify')">通知责任人</button>
+          </section>
+          <section v-else-if="store.selectedAiAlert" class="security-work-order-result">
+            <span>{{ store.selectedAiAlert.status === '已处理' ? '✓ 告警已消除并归档' : '↗ 已通知责任人，工单处理中' }}</span>
+          </section>
+          <section class="security-recent-alerts">
+            <h4>最近告警记录 <span>{{ store.selectedCamera.alertCount }} 条</span></h4>
+            <p v-if="!store.selectedCamera.alertCount">当前无未处置告警</p>
+            <p v-for="item in selectedCameraAlerts" v-else :key="item">{{ item }}</p>
+          </section>
+        </aside>
+      </transition>
+    </template>
+
+    <template v-else-if="store.activeNav === 'people'">
+      <div class="visitor-scene-badge"><i />UWB POSITIONING <b>访客实时定位</b><small>门禁、身份核验、定位数据实时融合</small></div>
+      <div class="visitor-scene-filters">
+        <div>
+          <button v-for="scope in ['全部访客','当前在厂','今日入厂','今日已离厂','异常访客'] as const" :key="scope"
+            :class="{ active: store.visitorScope === scope }" @click="store.visitorScope = scope">{{ scope }}</button>
+        </div>
+        <select v-model="store.visitorStatus" aria-label="访客状态筛选">
+          <option>全部状态</option><option>正常</option><option>即将超时</option><option>超时滞留</option><option>限制区告警</option><option>定位失联</option><option>已离厂</option>
+        </select>
+        <button v-if="store.visitorAreaFilter !== '全部区域'" class="visitor-filter-reset" @click="store.visitorAreaFilter = '全部区域'; store.expandedVisitorArea = null">清除区域筛选</button>
+      </div>
+
+      <svg v-if="store.selectedVisitor" class="visitor-track-map" viewBox="0 0 100 100" preserveAspectRatio="none">
+        <line v-for="segment in visitorTrackSegments" :key="`${segment.from.id}-${segment.to.id}`"
+          :x1="segment.from.x" :y1="segment.from.y" :x2="segment.to.x" :y2="segment.to.y"
+          :class="{ interrupted: segment.interrupted }" />
+        <circle v-for="node in store.activeVisitorTrack" :key="node.id" :cx="node.x" :cy="node.y" r=".55"
+          :class="`node-${node.event}`" />
+      </svg>
+      <div v-if="store.selectedVisitor && store.visitorTrackCursor" class="visitor-track-cursor"
+        :style="{ left: `${store.visitorTrackCursor.x}%`, top: `${store.visitorTrackCursor.y}%` }"><i /></div>
+
+      <template v-for="area in visitorAreaSummaries" :key="area.id">
+        <button v-if="store.expandedVisitorArea !== area.id && !store.selectedVisitor" class="visitor-cluster"
+          :class="{ alarming: area.displayAbnormal > 0 }" :style="{ left: `${area.x}%`, top: `${area.y}%` }"
+          @click.stop="store.expandedVisitorArea = area.id">
+          <i><el-icon><component :is="iconMap.UserFilled" /></el-icon><b>{{ area.displayTotal }}</b></i>
+          <span><strong>{{ area.name }}</strong><small>访客 {{ area.displayTotal }} 人 · 异常 {{ area.displayAbnormal }} 人</small></span>
+        </button>
+        <button v-for="visitor in area.people" v-else :key="visitor.id" class="visitor-marker"
+          :class="[`status-${visitorStatusTone(visitor.status)}`, { selected: store.selectedVisitor?.id === visitor.id, dimmed: store.selectedVisitor && store.selectedVisitor.id !== visitor.id }]"
+          :style="{ left: `${visitor.x}%`, top: `${visitor.y}%` }" @click.stop="store.selectVisitor(visitor)">
+          <span><el-icon><component :is="iconMap.UserFilled" /></el-icon></span><i>{{ visitor.maskedName }}</i>
+          <div><strong>{{ visitor.maskedName }} · {{ visitor.status }}</strong><small>{{ visitor.company }}</small><small>{{ visitor.area }} · 入厂 {{ visitor.actualEntry }}</small><small>停留 {{ visitor.duration }} · 定位 {{ visitor.lastLocated }}</small></div>
+        </button>
+      </template>
+
+    </template>
+
+    <template v-else>
+      <button v-for="marker in store.visibleMarkers" :key="marker.id" class="scene-marker" :class="[`tone-${marker.tone}`, { selected: store.selectedMarker?.id === marker.id }]" :style="{ left: `${marker.x}%`, top: `${marker.y}%` }" :aria-label="`${marker.name}：${marker.sub}`" @click="store.selectedMarker = marker">
+        <span class="marker-pulse" /><span class="marker-label"><strong>{{ marker.name }}</strong><small>{{ marker.sub }}</small></span>
+      </button>
+    </template>
     <div class="compass"><b>N</b><i>▲</i><span>3D</span></div>
-    <nav class="layer-bar">
+    <nav v-if="store.activeNav !== 'security' && store.activeNav !== 'people'" class="layer-bar">
       <button v-for="item in layerItems" :key="item.key" :class="{ active: store.activeLayer === item.key }" @click="store.activeLayer = item.key; store.riskFilter = '全部'">
         <el-icon><component :is="iconMap[item.icon]" /></el-icon><span>{{ item.label }}</span>
       </button>
     </nav>
-    <transition name="slide">
+    <transition v-if="store.activeNav !== 'security' && store.activeNav !== 'people'" name="slide">
       <aside v-if="store.selectedMarker?.device" class="device-detail">
         <button class="detail-close" @click="store.selectedMarker = null">×</button>
         <div class="detail-title"><span class="live-dot" /><div><small>设备实时档案</small><h3>{{ store.selectedMarker.device.name }}</h3></div></div>

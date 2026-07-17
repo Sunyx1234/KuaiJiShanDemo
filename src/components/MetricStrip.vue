@@ -14,7 +14,6 @@ const iconMap = Icons as Record<string, any>
         <p>{{ metric.label }}</p>
         <strong>{{ metric.value }}<small>{{ metric.unit }}</small></strong>
       </div>
-      <span class="metric-delta" :class="{ down: !metric.positive }">同比 {{ metric.positive ? '+' : '-' }}{{ metric.delta }}</span>
     </article>
   </div>
 </template>

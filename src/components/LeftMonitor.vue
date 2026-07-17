@@ -8,7 +8,7 @@ import { useDashboardStore } from '../stores/dashboard'
 
 const store = useDashboardStore()
 const gaugeOption = computed(() => ({
-  series: [{ type: 'gauge', startAngle: 210, endAngle: -30, min: 0, max: 100, radius: '92%', center: ['35%', '52%'],
+  series: [{ type: 'gauge', startAngle: 210, endAngle: -30, min: 0, max: 100, radius: 59, center: ['50%', '52%'],
     progress: { show: true, width: 10, itemStyle: { color: '#28a9ff' } }, axisLine: { lineStyle: { width: 10, color: [[1, '#12304c']] } },
     pointer: { show: false }, axisTick: { show: false }, splitLine: { show: false }, axisLabel: { show: false },
     detail: { valueAnimation: true, formatter: '{value}', color: '#bde8ff', fontSize: 27, offsetCenter: [0, '-4%'] },
@@ -16,11 +16,10 @@ const gaugeOption = computed(() => ({
 }))
 const deviceOption = computed(() => ({
   series: [
-    { type: 'pie', radius: ['55%', '67%'], center: ['50%', '50%'], label: { show: false }, data: [
+    { type: 'pie', radius: [44, 59], center: ['50%', '50%'], label: { show: false }, data: [
       { value: 2114, name: '运行', itemStyle: { color: '#2b88ff' } }, { value: 187, name: '停机', itemStyle: { color: '#305275' } },
       { value: 58, name: '维护', itemStyle: { color: '#f0a93a' } }, { value: 52, name: '告警', itemStyle: { color: '#ef5260' } },
     ]},
-    { type: 'pie', radius: ['76%', '78%'], center: ['50%', '50%'], silent: true, label: { show: false }, data: [{ value: 1, itemStyle: { color: '#1b659f' } }, { value: 1, itemStyle: { color: '#0a1930' } }] },
   ],
   graphic: [{ type: 'text', left: 'center', top: '38%', style: { text: '设备总数', fill: '#8eabc9', fontSize: 12 } }, { type: 'text', left: 'center', top: '52%', style: { text: '2,411', fill: '#bde8ff', fontSize: 24, fontWeight: 700 } }]
 }))

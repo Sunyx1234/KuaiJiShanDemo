@@ -1,4 +1,8 @@
 node_modules/
 dist/
+.pnpm-store/
+切分素材/
+效果演示.png
+主体素材.png
 *.log
 .DS_Store

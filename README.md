@@ -1,4 +1,4 @@
-# 正泰集团厂区运营中心
+# 正泰集团厂区综合态势运营中心
 
 基于 Vue 3、TypeScript、Vite、Element Plus、ECharts、Pinia 与 Vue Router 4 开发的 1920 × 1080 数字孪生可视化大屏。
 

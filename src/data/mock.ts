@@ -42,9 +42,6 @@ export const layerItems: { key: LayerKey; label: string; icon: string }[] = [
   { key: 'device', label: '设备', icon: 'Cpu' },
   { key: 'people', label: '人员', icon: 'UserFilled' },
   { key: 'camera', label: '摄像头', icon: 'VideoCameraFilled' },
-  { key: 'risk', label: '风险点', icon: 'WarningFilled' },
-  { key: 'fire', label: '消防设施', icon: 'HelpFilled' },
-  { key: 'environment', label: '环境监测', icon: 'MostlyCloudy' },
 ]
 
 export const sceneMarkers: SceneMarker[] = [
@@ -52,6 +49,12 @@ export const sceneMarkers: SceneMarker[] = [
     device: { name: '10kV 智能配电柜', code: 'CHT-PD-1028', area: '变配电室', type: '高压配电设备', rated: '1,250 kVA', running: '826 kW', status: '正常运行', businessLabel: '今日供电量', businessValue: '18.6 MWh', hours: '18,642 h', updated: '14:01:25', trend: [62,68,65,74,71,79,82,78,85,83,88,82], alarms: ['07-12 温升预警 · 已恢复', '06-28 A相电压波动 · 已关闭'] } },
   { id: 'pump', name: '循环水泵房', sub: '3#泵 · 运行中', x: 49, y: 22, layer: 'device', tone: 'info',
     device: { name: '3# 循环水泵', code: 'CHT-WP-0303', area: '循环水泵房', type: '离心式循环泵', rated: '160 kW', running: '128 kW', status: '正常运行', businessLabel: '今日能耗', businessValue: '2,184 kWh', hours: '9,268 h', updated: '14:01:18', trend: [71,72,73,72,76,75,78,80,79,82,81,80], alarms: ['07-10 出口压力偏低 · 已恢复'] } },
+  { id: 'air-compressor', name: '空压站 2#机组', sub: '排气压力 0.72MPa · 运行中', x: 63, y: 43, layer: 'device', tone: 'normal',
+    device: { name: '2# 离心式空压机组', code: 'CHT-AC-0206', area: '能源动力区', type: '离心式空压机', rated: '315 kW', running: '246 kW', status: '正常运行', businessLabel: '当前供气量', businessValue: '4,820 Nm³/h', hours: '12,406 h', updated: '14:01:20', trend: [68,70,72,73,76,78,77,80,81,79,78,78], alarms: ['07-15 冷却水温偏高 · 已恢复'] } },
+  { id: 'assembly-line', name: '1#车间装配线', sub: '节拍 42秒 · 稼动率 94.6%', x: 35, y: 47, layer: 'device', tone: 'info',
+    device: { name: '智能装配线 A', code: 'CHT-PL-A018', area: '1#生产车间', type: '自动化装配产线', rated: '180 件/h', running: '170 件/h', status: '正常生产', businessLabel: '今日产量', businessValue: '3,864 件', hours: '7,932 h', updated: '14:01:22', trend: [77,81,84,83,88,91,90,93,94,95,93,95], alarms: ['07-16 工位传感器遮挡 · 已关闭'] } },
+  { id: 'solar-inverter', name: '屋顶光伏逆变器', sub: '发电 1.86MW · 并网正常', x: 55, y: 31, layer: 'device', tone: 'normal',
+    device: { name: '3# 光伏并网逆变器', code: 'CHT-PV-INV03', area: '2#生产车间屋顶', type: '组串式逆变器', rated: '250 kW', running: '218 kW', status: '并网运行', businessLabel: '今日发电量', businessValue: '1.42 MWh', hours: '6,584 h', updated: '14:01:16', trend: [18,24,31,45,62,78,86,91,88,74,51,29], alarms: ['07-08 组串电流偏低 · 已恢复'] } },
   { id: 'warehouse', name: '危险品仓库', sub: '可燃气体 18%LEL', x: 66, y: 54, layer: 'risk', tone: 'critical' },
   { id: 'height', name: '高处作业风险', sub: '2人作业 · 已监护', x: 32, y: 54, layer: 'risk', tone: 'attention' },
   { id: 'waste', name: '污水处理站', sub: 'COD 36mg/L', x: 75, y: 31, layer: 'environment', tone: 'normal' },
@@ -59,6 +62,11 @@ export const sceneMarkers: SceneMarker[] = [
   { id: 'people-1', name: '人员聚集区域', sub: '当前 38 人', x: 74, y: 69, layer: 'people', tone: 'critical' },
   { id: 'fire-1', name: '消防栓 F-16', sub: '压力正常', x: 59, y: 73, layer: 'fire', tone: 'normal' },
   { id: 'building-1', name: '中央控制室', sub: 'A栋 · 4层', x: 46, y: 55, layer: 'building', tone: 'info' },
+  { id: 'building-2', name: '1#生产车间', sub: '智能装配与检测 · 368人在岗', x: 34, y: 44, layer: 'building', tone: 'info' },
+  { id: 'building-3', name: '2#生产车间', sub: '精密制造与加工 · 286人在岗', x: 55, y: 34, layer: 'building', tone: 'info' },
+  { id: 'building-4', name: '原料仓储中心', sub: '库存利用率 76% · 作业正常', x: 49, y: 65, layer: 'building', tone: 'normal' },
+  { id: 'building-5', name: '行政研发中心', sub: 'A/B座 · 当前 412人', x: 72, y: 63, layer: 'building', tone: 'info' },
+  { id: 'building-6', name: '东门访客中心', sub: '今日到访 142人 · 通行正常', x: 82, y: 47, layer: 'building', tone: 'normal' },
 ]
 
 export const alerts: AlertItem[] = [

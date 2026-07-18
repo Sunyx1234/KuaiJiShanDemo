@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import * as Icons from '@element-plus/icons-vue'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { layerItems, securityCameraAreas, securityCameras, visitorAreas } from '../data/mock'
+import { alerts, layerItems, sceneMarkers, securityCameraAreas, securityCameras, visitorAreas, visitors } from '../data/mock'
 import { useDashboardStore } from '../stores/dashboard'
+import type { LayerKey } from '../data/types'
 import BaseChart from './BaseChart.vue'
 
 const store = useDashboardStore()
@@ -16,7 +17,11 @@ const videoLoadFailed = ref(false)
 const previewPlaying = ref(true)
 const previewProgress = ref(38)
 const now = ref(new Date())
+const overviewCycleIndex = ref(0)
+const overviewVisitorMotionTick = ref(0)
+const activeOverviewCameraIds = ref<string[]>([])
 let timer = 0
+let overviewMotionTimer = 0
 const clock = computed(() => new Intl.DateTimeFormat('zh-CN', {
   year: 'numeric', month: '2-digit', day: '2-digit',
   hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
@@ -47,6 +52,50 @@ const selectedCameraAlerts = computed(() => store.selectedCamera
   ? ['14:00:22 明火识别 · 处理中', '13:49:06 烟雾识别 · 已处理'].slice(0, Math.max(store.selectedCamera.alertCount, 1))
   : [])
 const selectedAiAlertCamera = computed(() => securityCameras.find(camera => camera.id === store.selectedAiAlert?.cameraId))
+const overviewAlertMarkers = computed(() => alerts.flatMap(alert => {
+  const marker = sceneMarkers.find(item => item.id === alert.markerId)
+  return marker ? [{ alert, x: marker.x, y: marker.y }] : []
+}))
+const activeOverviewAlertId = computed(() => overviewAlertMarkers.value[
+  overviewCycleIndex.value % Math.max(overviewAlertMarkers.value.length, 1)
+]?.alert.id)
+const overviewBuildingMarkers = computed(() => sceneMarkers.filter(marker => marker.layer === 'building'))
+const overviewDeviceMarkers = computed(() => sceneMarkers.filter(marker => marker.layer === 'device' && marker.device))
+const activeOverviewBuilding = computed(() => overviewBuildingMarkers.value[overviewCycleIndex.value % Math.max(overviewBuildingMarkers.value.length, 1)])
+const activeOverviewDevice = computed(() => overviewDeviceMarkers.value[overviewCycleIndex.value % Math.max(overviewDeviceMarkers.value.length, 1)])
+const overviewVisitors = computed(() => visitors.filter(visitor => visitor.status !== '已离厂').map((visitor, index) => {
+  const phase = overviewVisitorMotionTick.value + index * 1.7
+  return {
+    ...visitor,
+    displayX: Math.min(88, Math.max(12, visitor.x + Math.sin(phase) * 1.15)),
+    displayY: Math.min(76, Math.max(20, visitor.y + Math.cos(phase * .86) * .85)),
+  }
+}))
+const activeOverviewCameras = computed(() => activeOverviewCameraIds.value
+  .map(id => securityCameras.find(camera => camera.id === id))
+  .filter((camera): camera is NonNullable<typeof camera> => Boolean(camera)))
+const overviewLayerDescriptions: Record<Extract<LayerKey, 'overview' | 'building' | 'device' | 'people' | 'camera'>, string> = {
+  overview: '实时告警动态感知',
+  building: '主要建筑轮巡',
+  device: '关键设备运行轮巡',
+  people: '园区访客实时定位',
+  camera: '监控点位随机巡检',
+}
+function refreshOverviewCameras() {
+  activeOverviewCameraIds.value = [...securityCameras]
+    .sort(() => Math.random() - .5)
+    .slice(0, 5)
+    .map(camera => camera.id)
+}
+function selectOverviewLayer(layer: LayerKey) {
+  store.activeLayer = layer
+  store.riskFilter = '全部'
+  store.selectedMarker = null
+  store.selectedAlert = null
+  store.closeCamera()
+  overviewCycleIndex.value = 0
+  if (layer === 'camera') refreshOverviewCameras()
+}
 function syncFullscreenMedia() {
   if (document.fullscreenElement === videoFrameRef.value) fullscreenMedia.value = 'video'
   else if (document.fullscreenElement === alertImageRef.value) fullscreenMedia.value = 'alert'
@@ -57,11 +106,19 @@ function handleFullscreenKeydown(event: KeyboardEvent) {
 }
 onMounted(() => {
   timer = window.setInterval(() => now.value = new Date(), 1000)
+  refreshOverviewCameras()
+  overviewMotionTimer = window.setInterval(() => {
+    if (store.activeNav !== 'overview') return
+    overviewCycleIndex.value += 1
+    overviewVisitorMotionTick.value += .82
+    if (store.activeLayer === 'camera') refreshOverviewCameras()
+  }, 2400)
   document.addEventListener('fullscreenchange', syncFullscreenMedia)
   document.addEventListener('keydown', handleFullscreenKeydown)
 })
 onBeforeUnmount(() => {
   clearInterval(timer)
+  clearInterval(overviewMotionTimer)
   document.removeEventListener('fullscreenchange', syncFullscreenMedia)
   document.removeEventListener('keydown', handleFullscreenKeydown)
 })
@@ -263,13 +320,109 @@ const detailTrend = computed(() => ({
     </template>
 
     <template v-else>
-      <button v-for="marker in store.visibleMarkers" :key="marker.id" class="scene-marker" :class="[`tone-${marker.tone}`, { selected: store.selectedMarker?.id === marker.id }]" :style="{ left: `${marker.x}%`, top: `${marker.y}%` }" :aria-label="`${marker.name}：${marker.sub}`" @click="store.selectedMarker = marker">
-        <span class="marker-pulse" /><span class="marker-label"><strong>{{ marker.name }}</strong><small>{{ marker.sub }}</small></span>
-      </button>
+      <div class="overview-layer-status"><i /><span>{{ overviewLayerDescriptions[store.activeLayer as keyof typeof overviewLayerDescriptions] }}</span><b>LIVE</b></div>
+
+      <template v-if="store.activeLayer === 'overview'">
+        <button v-for="(item, index) in overviewAlertMarkers" :key="item.alert.id"
+          class="overview-alert-marker" :class="[`tone-${item.alert.level}`, { active: activeOverviewAlertId === item.alert.id }]"
+          :style="{ left: `${item.x}%`, top: `${item.y}%`, '--marker-delay': `${index * .7}s` }"
+          :aria-label="`${item.alert.content}：${item.alert.area}`" @click.stop="store.locateAlert(item.alert)">
+          <span><b>!</b></span>
+          <div class="overview-marker-tooltip">
+            <header><i />{{ item.alert.category }}告警 <time>{{ item.alert.time }}</time></header>
+            <strong>{{ item.alert.content }}</strong>
+            <small>{{ item.alert.area }} · {{ item.alert.status }}</small>
+            <em>点击查看告警详情</em>
+          </div>
+        </button>
+      </template>
+
+      <template v-else-if="store.activeLayer === 'building'">
+          <button v-for="building in overviewBuildingMarkers" :key="building.id"
+            class="overview-building-marker" :class="{ active: activeOverviewBuilding?.id === building.id }"
+            :style="{ left: `${building.x}%`, top: `${building.y}%` }"
+            :aria-label="`${building.name}：${building.sub}`">
+            <span><el-icon><component :is="iconMap.OfficeBuilding" /></el-icon></span>
+            <div><strong>{{ building.name }}</strong><small>{{ building.sub }}</small></div>
+          </button>
+      </template>
+
+      <template v-else-if="store.activeLayer === 'device'">
+          <button v-for="deviceMarker in overviewDeviceMarkers" :key="deviceMarker.id"
+            class="overview-device-marker" :class="{ active: activeOverviewDevice?.id === deviceMarker.id, selected: store.selectedMarker?.id === deviceMarker.id }"
+            :style="{ left: `${deviceMarker.x}%`, top: `${deviceMarker.y}%` }"
+            :aria-label="`${deviceMarker.name}：${deviceMarker.sub}`" @click.stop="store.selectedMarker = deviceMarker">
+            <span><el-icon><component :is="iconMap.Cpu" /></el-icon></span>
+            <i>{{ deviceMarker.name }}</i>
+            <div class="overview-marker-tooltip device-tooltip">
+              <header><i />设备实时状态 <time>{{ deviceMarker.device?.updated }}</time></header>
+              <strong>{{ deviceMarker.device?.name }}</strong>
+              <small>{{ deviceMarker.device?.area }} · {{ deviceMarker.device?.status }}</small>
+              <small>{{ deviceMarker.device?.businessLabel }} {{ deviceMarker.device?.businessValue }}</small>
+              <em>点击查看设备实时档案</em>
+            </div>
+          </button>
+      </template>
+
+      <template v-else-if="store.activeLayer === 'people'">
+        <button v-for="(visitor, index) in overviewVisitors" :key="visitor.id"
+          class="overview-visitor-marker" :class="`status-${visitorStatusTone(visitor.status)}`"
+          :style="{ left: `${visitor.displayX}%`, top: `${visitor.displayY}%`, '--visitor-delay': `${index * .28}s` }"
+          :aria-label="`${visitor.maskedName}：${visitor.area}`">
+          <span><el-icon><component :is="iconMap.UserFilled" /></el-icon></span>
+          <div><strong>{{ visitor.maskedName }} · {{ visitor.status }}</strong><small>{{ visitor.area }} · {{ visitor.company }}</small></div>
+        </button>
+      </template>
+
+      <template v-else-if="store.activeLayer === 'camera'">
+        <transition-group name="camera-pop">
+          <button v-for="camera in activeOverviewCameras" :key="camera.id"
+            class="overview-camera-marker" :class="[`status-${camera.status}`, { selected: store.selectedCamera?.id === camera.id }]"
+            :style="{ left: `${camera.x}%`, top: `${camera.y}%` }"
+            :aria-label="`${camera.name}：${statusText[camera.status]}`" @click.stop="store.openCamera(camera)">
+            <span><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon></span>
+            <div><strong>{{ camera.name }}</strong><small>{{ camera.area }} · {{ statusText[camera.status] }}</small><em>点击查看实时画面</em></div>
+          </button>
+        </transition-group>
+      </template>
     </template>
+
+    <transition v-if="store.activeNav === 'overview' && store.activeLayer === 'camera'" name="slide">
+      <aside v-if="store.selectedCamera" class="security-video-preview overview-camera-preview">
+        <header>
+          <div><span class="live-dot" /><small>CAMERA LIVE / OVERVIEW</small><h3>{{ store.selectedCamera.name }}</h3></div>
+          <button @click="store.closeCamera">×</button>
+        </header>
+        <div ref="videoFrameRef" class="security-video-frame"
+          :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'video' }">
+          <video v-if="hasPlayableVideo" ref="videoRef" :src="store.selectedCamera.videoUrl"
+            autoplay muted loop playsinline preload="metadata" poster="/assets/factory-main.png"
+            @loadedmetadata="syncRequestedVideoTime" @error="handleVideoError" />
+          <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
+            :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
+            <span class="video-grid" /><b>LIVE</b><time>{{ clock }}</time>
+            <i class="tracking-box"><span>AI TRACKING</span></i>
+            <em>{{ store.selectedCamera.videoUrl ? '视频加载失败 · 已切换演示画面' : '演示画面 · 视频素材待配置' }}</em>
+          </div>
+          <button class="media-fullscreen-button" :aria-label="fullscreenMedia === 'video' || fallbackFullscreenMedia === 'video' ? '退出视频全屏' : '全屏查看实时视频'"
+            @click="toggleMediaFullscreen('video')"><el-icon><component :is="iconMap.FullScreen" /></el-icon></button>
+        </div>
+        <div class="security-camera-meta">
+          <span>所属区域<b>{{ store.selectedCamera.area }}</b></span>
+          <span>当前状态<b :class="`camera-${store.selectedCamera.status}`">{{ statusText[store.selectedCamera.status] }}</b></span>
+          <span class="wide">启用算法<b>{{ store.selectedCamera.algorithms.join('、') }}</b></span>
+        </div>
+        <section class="security-recent-alerts">
+          <h4>最近告警记录 <span>{{ store.selectedCamera.alertCount }} 条</span></h4>
+          <p v-if="!store.selectedCamera.alertCount">当前无未处置告警</p>
+          <p v-for="item in selectedCameraAlerts" v-else :key="item">{{ item }}</p>
+        </section>
+      </aside>
+    </transition>
+
     <div class="compass"><b>N</b><i>▲</i><span>3D</span></div>
     <nav v-if="store.activeNav !== 'security' && store.activeNav !== 'people'" class="layer-bar">
-      <button v-for="item in layerItems" :key="item.key" :class="{ active: store.activeLayer === item.key }" @click="store.activeLayer = item.key; store.riskFilter = '全部'">
+      <button v-for="item in layerItems" :key="item.key" :class="{ active: store.activeLayer === item.key }" @click="selectOverviewLayer(item.key)">
         <el-icon><component :is="iconMap[item.icon]" /></el-icon><span>{{ item.label }}</span>
       </button>
     </nav>

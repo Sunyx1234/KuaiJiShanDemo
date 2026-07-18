@@ -30,7 +30,7 @@ function switchNav(key: NavKey | 'more', disabled = false) {
       <button v-for="item in navItems.slice(0, 2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
     </nav>
     <div class="title-block">
-      <h1>正泰集团厂区运营中心</h1>
+      <h1>正泰集团厂区综合态势运营中心</h1>
       <p>CHINT GROUP FACTORY OPERATIONS CENTER</p>
     </div>
     <nav class="nav nav--right">

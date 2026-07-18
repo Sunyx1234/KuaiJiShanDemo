@@ -1,14 +1,15 @@
-# 正泰集团厂区运营中心——开发交接
+# 正泰集团厂区综合态势运营中心——开发交接
 
 ## 1. 当前开发基线
 
-- 当前已确认版本提交：`fa10ef3 Build AI monitoring and visitor management modules`
+- 当前已发布版本提交：`80a0b35 Add security media and Netlify OSS delivery`
 - GitHub 仓库：<https://github.com/Sunyx1234/BigScreenDemo>
 - 默认分支：`main`
+- Netlify 稳定生产地址：<https://tiny-bienenstitch-386238.netlify.app/>
 - 基准画布：`1920 × 1080`，由 `ScreenFrame.vue` 统一等比例缩放。
 - 当前版本已完成综合态势、AI 安全监控、访客实时管控和访客管理主题页；设备监测和应急指挥暂不开发，已移除导航入口。
 - 后续必须在现有视觉和交互体系上增量开发，不要重构成普通后台或重新设计整体视觉层。
-- `fa10ef3` 只完成了本地提交，交接时尚未推送远程仓库。
+- `main` 已与 `origin/main` 同步，并连接 Netlify 持续部署。
 
 新对话开始后建议先执行：
 
@@ -50,6 +51,34 @@ npm run preview
 ```powershell
 git -c http.proxy="http://127.0.0.1:12450" -c https.proxy="http://127.0.0.1:12450" push
 ```
+
+### 线上部署与更新链路
+
+当前采用 GitHub + Netlify + 私有阿里云 OSS：
+
+```text
+本地修改和验证
+→ 提交并推送 GitHub main
+→ Netlify 自动执行 npm run build
+→ 发布 dist 和 netlify/functions
+→ 稳定生产地址自动指向最新成功版本
+```
+
+- Netlify 构建配置位于 `netlify.toml`：
+  - Build command：`npm run build`
+  - Publish directory：`dist`
+  - Functions directory：`netlify/functions`
+- 稳定生产地址用于长期分享：<https://tiny-bienenstitch-386238.netlify.app/>
+- 形如 `<deploy-id>--tiny-bienenstitch-386238.netlify.app` 的地址是单次部署永久快照，以后不会更新。
+- 如果新构建失败，稳定生产地址继续保留上一个成功发布版本。
+- Netlify 需要以下环境变量；真实密钥仅保存在 Netlify，禁止写入仓库：
+  - `VITE_USE_OSS_SIGNED_VIDEOS=true`
+  - `OSS_ACCESS_KEY_ID`
+  - `OSS_ACCESS_KEY_SECRET`
+  - `OSS_BUCKET=ztvideos`
+  - `OSS_REGION=oss-cn-shanghai`
+  - `OSS_VIDEO_PREFIX=chint-dashboard/videos`
+- 修改 Netlify 环境变量后，需要重新触发部署。
 
 ## 3. 页面入口与主题结构
 
@@ -94,6 +123,14 @@ src/main.ts
 - 访客实时管控展示当前在厂、今日入厂、超时滞留、限制区告警、定位标签失联、更新时间、访客动态和异常事件。
 - 访客异常事件名称与访客编号分列展示，不使用竖向分割线。
 - 点击整个“访客实时管控”模块进入访客管理页，并默认选择“当前在厂”。
+- 中央模型下方图层栏已精简为“总览 / 建筑 / 设备 / 人员 / 摄像头”，风险点、消防设施和环境监测入口已移除。
+- 综合态势中央模型已增加五类动态图层：
+  - 总览：五类实时告警点位持续错峰脉冲；每 2.4 秒轮流自动展开一个告警摘要并增强对应等级光晕，无需悬停；鼠标悬停其他点位仍可临时查看，点击复用统一告警详情弹窗。
+  - 建筑：中央控制室、生产车间、仓储中心、行政研发中心和访客中心等主要建筑标签全部常驻，基础透明度为 80%；每 2.4 秒轮流将一个标签提升到 100% 并增强光晕。
+  - 设备：配电柜、水泵、空压机、装配线和光伏逆变器标签全部常驻，基础透明度为 80%；每 2.4 秒轮流强化一个点位，悬停显示实时状态，点击打开设备实时档案。
+  - 人员：综合态势直接展示当前在厂的代表性访客点位，并按周期平滑更新位置。
+  - 摄像头：每轮随机显示 5 个监控点位；点击复用安全监控视频弹窗，支持自动播放、循环和全屏。
+- 动态轮巡只在综合态势下运行，不改变模型素材尺寸、三栏布局或其他主题页的点位逻辑。
 
 中央主视觉：
 
@@ -220,7 +257,7 @@ src/main.ts
 
 ## 9. 当前验证结果与已知事项
 
-`fa10ef3` 提交前已完成：
+`80a0b35` 发布前后已完成：
 
 - `npm run build`
 - `git diff --check`
@@ -228,6 +265,13 @@ src/main.ts
 - AI 告警处置、访客入口、区域展开、访客筛选、异常联动、时间范围、轨迹播放检查
 - 连续轨迹四帧采样位置均不同，确认不是节点跳转
 - 页面运行期间未发现控制台错误
+- GitHub `main` 已成功推送并触发 Netlify 自动部署。
+- 稳定生产地址和 Netlify Function 均返回 HTTP 200。
+- 视频签名函数成功返回 13 个 OSS 临时地址，签名有效期为 14,400 秒。
+- OSS 视频分段请求返回 HTTP 206、`video/mp4` 和 `Accept-Ranges: bytes`，线上流式播放链路已验证。
+- 综合态势五类动态图层已完成 1920 × 1080 浏览器回归：建筑与设备标签全量常驻并轮流强化，6 个访客点位坐标连续更新，摄像头每轮稳定保留 5 个随机点位。
+- 综合态势摄像头弹窗实测视频 `readyState=4`、自动播放、静音循环、无进度条，源视频尺寸为 1920 × 1080。
+- 动态图层交互期间未出现页面级溢出或浏览器控制台错误；安全监控主题切换回归正常。
 
 非阻断事项：
 
@@ -235,9 +279,11 @@ src/main.ts
 - Windows 环境执行 npm 后偶尔显示用户目录 npm 路径权限提示，但构建本身返回成功。
 - Git 可能提示无法访问用户级 `.config/git/ignore`，不影响仓库状态和提交。
 - 视频监控已接入本地录像素材模拟实时画面，仍未连接真实视频流。
-- `public/assets/videos/` 素材总量约 1.32 GB，多个文件接近或超过 GitHub 普通单文件上传限制，提交远端前需压缩、使用 Git LFS 或改为外部资源托管。
+- `public/assets/videos/` 素材总量约 1.32 GB，已通过 `.gitignore` 排除，不得强制提交至 GitHub。
+- `public/assets/images/` 中仅 `ai-*.jpg` 告警截图允许提交；原始录频、检测结果、Excel 和批量抽帧均被忽略。
 - 13 个监控视频已上传至私有阿里云 OSS：`ztvideos/chint-dashboard/videos/`（上海地域）。本地开发仍读取被 Git 忽略的 `public/assets/videos/`；Netlify 生产环境通过 `netlify/functions/video-urls.mjs` 使用 RAM 只读密钥签发 4 小时有效的视频地址，前端接线位于 `src/services/securityVideoUrls.ts`。
 - OSS AccessKey 只允许配置在 Netlify 环境变量中，禁止写入仓库或任何 `VITE_*` 变量。所需变量见 `.env.example`。
+- 替换监控视频时需同时上传 OSS；保持 `cam-*.mp4` 对象名不变可直接覆盖，不需要修改前端映射。若改名，则必须同步修改摄像头数据和签名函数白名单。
 - 访客点位仅提供业务演示所需的代表性模拟数据，不代表全部 86 人逐点绘制。
 
 ## 10. 新对话推荐工作方式

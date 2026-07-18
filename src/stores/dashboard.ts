@@ -89,22 +89,28 @@ export const useDashboardStore = defineStore('dashboard', () => {
     activeLayer.value = 'overview'
   }
 
-  function openCamera(camera: SecurityCamera, alert: AiAlert | null = null) {
+  function openCamera(camera: SecurityCamera) {
     expandedCameraArea.value = camera.areaId
     selectedCamera.value = camera
-    selectedAiAlert.value = alert
-    requestedVideoTime.value = alert?.videoTime ?? 0
+    selectedAiAlert.value = null
+    requestedVideoTime.value = 0
   }
 
   function locateAiAlert(alert: AiAlert) {
     const camera = securityCameras.find(item => item.id === alert.cameraId)
-    if (camera) openCamera(camera, alert)
+    selectedCamera.value = null
+    selectedAiAlert.value = alert
+    expandedCameraArea.value = camera?.areaId ?? null
+    requestedVideoTime.value = 0
   }
 
   function closeCamera() {
     selectedCamera.value = null
-    selectedAiAlert.value = null
     requestedVideoTime.value = 0
+  }
+
+  function closeAiAlert() {
+    selectedAiAlert.value = null
   }
 
   function processAiAlert(action: 'dismiss' | 'notify') {
@@ -149,6 +155,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     visitorScope, visitorStatus, visitorAreaFilter, expandedVisitorArea, selectedVisitor, selectedVisitorException,
     visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
     metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
-    locateAlert, openCamera, locateAiAlert, closeCamera, processAiAlert, enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
+    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
   }
 })

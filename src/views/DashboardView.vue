@@ -13,8 +13,10 @@ import VisitorLeft from '../components/VisitorLeft.vue'
 import VisitorRight from '../components/VisitorRight.vue'
 import VisitorTimelineDock from '../components/VisitorTimelineDock.vue'
 import { useDashboardStore } from '../stores/dashboard'
+import { configureSecurityVideoUrls } from '../services/securityVideoUrls'
 
 const store = useDashboardStore()
+void configureSecurityVideoUrls()
 </script>
 
 <template>

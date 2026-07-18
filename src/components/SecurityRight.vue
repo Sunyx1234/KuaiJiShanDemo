@@ -28,7 +28,10 @@ const levelClass = (level: string) => level === '严重' ? 'critical' : level ==
       <div class="security-alert-list">
         <button v-for="alert in store.filteredAiAlerts" :key="alert.id" :class="{ selected: store.selectedAiAlert?.id === alert.id }"
           @click="store.locateAiAlert(alert)">
-          <span class="ai-snapshot" :style="{ backgroundPosition: alert.snapshotPosition }">
+          <span class="ai-snapshot" :style="{
+            '--alert-snapshot': alert.snapshotUrl ? `url('${alert.snapshotUrl}')` : 'none',
+            '--snapshot-position': alert.snapshotPosition,
+          }">
             <i :class="`level-${levelClass(alert.level)}`">{{ alert.level }}</i>
             <em>AI</em>
           </span>

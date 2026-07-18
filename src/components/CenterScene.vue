@@ -8,6 +8,11 @@ import BaseChart from './BaseChart.vue'
 const store = useDashboardStore()
 const iconMap = Icons as Record<string, any>
 const videoRef = ref<HTMLVideoElement | null>(null)
+const videoFrameRef = ref<HTMLElement | null>(null)
+const alertImageRef = ref<HTMLElement | null>(null)
+const fullscreenMedia = ref<'video' | 'alert' | null>(null)
+const fallbackFullscreenMedia = ref<'video' | 'alert' | null>(null)
+const videoLoadFailed = ref(false)
 const previewPlaying = ref(true)
 const previewProgress = ref(38)
 const now = ref(new Date())
@@ -41,16 +46,64 @@ const visitorStatusTone = (status: string) => {
 const selectedCameraAlerts = computed(() => store.selectedCamera
   ? ['14:00:22 明火识别 · 处理中', '13:49:06 烟雾识别 · 已处理'].slice(0, Math.max(store.selectedCamera.alertCount, 1))
   : [])
-onMounted(() => { timer = window.setInterval(() => now.value = new Date(), 1000) })
-onBeforeUnmount(() => clearInterval(timer))
+const selectedAiAlertCamera = computed(() => securityCameras.find(camera => camera.id === store.selectedAiAlert?.cameraId))
+function syncFullscreenMedia() {
+  if (document.fullscreenElement === videoFrameRef.value) fullscreenMedia.value = 'video'
+  else if (document.fullscreenElement === alertImageRef.value) fullscreenMedia.value = 'alert'
+  else fullscreenMedia.value = null
+}
+function handleFullscreenKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') fallbackFullscreenMedia.value = null
+}
+onMounted(() => {
+  timer = window.setInterval(() => now.value = new Date(), 1000)
+  document.addEventListener('fullscreenchange', syncFullscreenMedia)
+  document.addEventListener('keydown', handleFullscreenKeydown)
+})
+onBeforeUnmount(() => {
+  clearInterval(timer)
+  document.removeEventListener('fullscreenchange', syncFullscreenMedia)
+  document.removeEventListener('keydown', handleFullscreenKeydown)
+})
 watch(() => store.requestedVideoTime, time => {
   if (videoRef.value) videoRef.value.currentTime = time
 })
+watch(() => store.selectedCamera?.id, () => {
+  videoLoadFailed.value = false
+  previewPlaying.value = true
+})
+const hasPlayableVideo = computed(() => Boolean(store.selectedCamera?.videoUrl) && !videoLoadFailed.value)
 function togglePreview() {
   previewPlaying.value = !previewPlaying.value
   if (!videoRef.value) return
   if (previewPlaying.value) void videoRef.value.play()
   else videoRef.value.pause()
+}
+function syncRequestedVideoTime() {
+  if (!videoRef.value) return
+  videoRef.value.currentTime = Math.min(store.requestedVideoTime, videoRef.value.duration || store.requestedVideoTime)
+}
+function handleVideoError() {
+  videoLoadFailed.value = true
+}
+async function toggleMediaFullscreen(target: 'video' | 'alert') {
+  const element = target === 'video' ? videoFrameRef.value : alertImageRef.value
+  if (!element) return
+  if (fallbackFullscreenMedia.value === target) {
+    fallbackFullscreenMedia.value = null
+    return
+  }
+  if (document.fullscreenElement === element) {
+    await document.exitFullscreen()
+    return
+  }
+  fallbackFullscreenMedia.value = null
+  try {
+    if (document.fullscreenElement) await document.exitFullscreen()
+    await element.requestFullscreen()
+  } catch {
+    fallbackFullscreenMedia.value = target
+  }
 }
 const detailTrend = computed(() => ({
   grid: { left: 25, right: 8, top: 8, bottom: 18 },
@@ -92,37 +145,34 @@ const detailTrend = computed(() => ({
       </template>
 
       <transition name="slide">
-        <aside v-if="store.selectedCamera" class="security-video-preview">
+        <aside v-if="store.selectedAiAlert" class="security-video-preview security-alert-detail">
           <header>
-            <div><span class="live-dot" /><small>CAMERA LIVE / AI ANALYTICS</small><h3>{{ store.selectedCamera.name }}</h3></div>
-            <button @click="store.closeCamera">×</button>
+            <div><span class="live-dot alarm-dot" /><small>AI ALERT / WORK ORDER</small><h3>算法告警详情</h3></div>
+            <button @click="store.closeAiAlert">×</button>
           </header>
-          <div class="security-video-frame">
-            <video v-if="store.selectedCamera.videoUrl" ref="videoRef" :src="store.selectedCamera.videoUrl"
-              autoplay controls playsinline :poster="`/assets/factory-main.png`" />
-            <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
-              :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
-              <span class="video-grid" /><b>LIVE</b><time>{{ clock }}</time>
-              <i class="tracking-box"><span>AI TRACKING</span></i>
-              <em>本地演示画面 · 视频素材待配置</em>
-            </div>
-            <div v-if="!store.selectedCamera.videoUrl" class="security-video-controls">
-              <button @click="togglePreview">{{ previewPlaying ? 'Ⅱ' : '▶' }}</button>
-              <input v-model="previewProgress" type="range" min="0" max="100" aria-label="视频进度" />
-              <time>00:{{ String(Math.round(Number(previewProgress) * .36)).padStart(2, '0') }} / 00:36</time>
-            </div>
+          <div ref="alertImageRef" class="security-alert-detail-image"
+            :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'alert' }" :style="{
+            '--alert-snapshot': store.selectedAiAlert.snapshotUrl ? `url('${store.selectedAiAlert.snapshotUrl}')` : 'none',
+            '--snapshot-position': store.selectedAiAlert.snapshotPosition,
+          }">
+            <span :class="`level-${store.selectedAiAlert.level}`">{{ store.selectedAiAlert.level }}</span>
+            <time>{{ store.selectedAiAlert.time }}</time>
+            <button class="media-fullscreen-button" :aria-label="fullscreenMedia === 'alert' || fallbackFullscreenMedia === 'alert' ? '退出告警截图全屏' : '全屏查看告警截图'"
+              @click="toggleMediaFullscreen('alert')"><el-icon><component :is="iconMap.FullScreen" /></el-icon></button>
           </div>
-          <div class="security-camera-meta">
-            <span>所属区域<b>{{ store.selectedCamera.area }}</b></span>
-            <span>当前状态<b :class="`camera-${store.selectedCamera.status}`">{{ statusText[store.selectedCamera.status] }}</b></span>
-            <span class="wide">启用算法<b>{{ store.selectedCamera.algorithms.join('、') }}</b></span>
-          </div>
-          <section v-if="store.selectedAiAlert" class="security-linked-alert">
-            <span :class="`ai-level-${store.selectedAiAlert.level}`">{{ store.selectedAiAlert.level }}</span>
-            <div><small>{{ store.selectedAiAlert.algorithm }} · {{ store.selectedAiAlert.time }}</small><b>{{ store.selectedAiAlert.content }}</b></div>
-            <em>{{ store.selectedAiAlert.status }}</em>
+          <section class="security-alert-detail-summary">
+            <span>{{ store.selectedAiAlert.algorithm }}</span>
+            <strong>{{ store.selectedAiAlert.content }}</strong>
+            <small>{{ store.selectedAiAlert.orderNo }}</small>
           </section>
-          <section v-if="store.selectedAiAlert?.status === '待确认'" class="security-work-order-actions">
+          <div class="security-alert-detail-meta">
+            <span>发生时间<b>2026-07-17 {{ store.selectedAiAlert.time }}</b></span>
+            <span>所属区域<b>{{ store.selectedAiAlert.area }}</b></span>
+            <span>监控点位<b>{{ selectedAiAlertCamera?.name ?? '未关联摄像头' }}</b></span>
+            <span>工单状态<b :class="`status-${store.selectedAiAlert.status}`">{{ store.selectedAiAlert.status }}</b></span>
+            <span class="wide">处理责任人<b>{{ store.selectedAiAlert.assignee }}</b></span>
+          </div>
+          <section v-if="store.selectedAiAlert.status === '待确认'" class="security-work-order-actions">
             <div>
               <small>告警工单待确认</small>
               <b>请选择处置方式，处理结果将同步更新告警状态</b>
@@ -130,9 +180,39 @@ const detailTrend = computed(() => ({
             <button class="dismiss" @click="store.processAiAlert('dismiss')">消除告警</button>
             <button class="notify" @click="store.processAiAlert('notify')">通知责任人</button>
           </section>
-          <section v-else-if="store.selectedAiAlert" class="security-work-order-result">
+          <section v-else class="security-work-order-result">
             <span>{{ store.selectedAiAlert.status === '已处理' ? '✓ 告警已消除并归档' : '↗ 已通知责任人，工单处理中' }}</span>
           </section>
+        </aside>
+        <aside v-else-if="store.selectedCamera" class="security-video-preview">
+          <header>
+            <div><span class="live-dot" /><small>CAMERA LIVE / AI ANALYTICS</small><h3>{{ store.selectedCamera.name }}</h3></div>
+            <button @click="store.closeCamera">×</button>
+          </header>
+          <div ref="videoFrameRef" class="security-video-frame"
+            :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'video' }">
+            <video v-if="hasPlayableVideo" ref="videoRef" :src="store.selectedCamera.videoUrl"
+              autoplay muted loop playsinline preload="metadata" :poster="`/assets/factory-main.png`"
+              @loadedmetadata="syncRequestedVideoTime" @error="handleVideoError" />
+            <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
+              :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
+              <span class="video-grid" /><b>LIVE</b><time>{{ clock }}</time>
+              <i class="tracking-box"><span>AI TRACKING</span></i>
+              <em>{{ store.selectedCamera.videoUrl ? '视频加载失败 · 已切换演示画面' : '本地演示画面 · 视频素材待配置' }}</em>
+            </div>
+            <div v-if="!hasPlayableVideo" class="security-video-controls">
+              <button @click="togglePreview">{{ previewPlaying ? 'Ⅱ' : '▶' }}</button>
+              <input v-model="previewProgress" type="range" min="0" max="100" aria-label="视频进度" />
+              <time>00:{{ String(Math.round(Number(previewProgress) * .36)).padStart(2, '0') }} / 00:36</time>
+            </div>
+            <button class="media-fullscreen-button" :aria-label="fullscreenMedia === 'video' || fallbackFullscreenMedia === 'video' ? '退出视频全屏' : '全屏查看实时视频'"
+              @click="toggleMediaFullscreen('video')"><el-icon><component :is="iconMap.FullScreen" /></el-icon></button>
+          </div>
+          <div class="security-camera-meta">
+            <span>所属区域<b>{{ store.selectedCamera.area }}</b></span>
+            <span>当前状态<b :class="`camera-${store.selectedCamera.status}`">{{ statusText[store.selectedCamera.status] }}</b></span>
+            <span class="wide">启用算法<b>{{ store.selectedCamera.algorithms.join('、') }}</b></span>
+          </div>
           <section class="security-recent-alerts">
             <h4>最近告警记录 <span>{{ store.selectedCamera.alertCount }} 条</span></h4>
             <p v-if="!store.selectedCamera.alertCount">当前无未处置告警</p>

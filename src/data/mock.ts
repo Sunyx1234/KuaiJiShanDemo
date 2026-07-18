@@ -1,11 +1,10 @@
 import type { AiAlert, AiCategoryStat, AlarmHotspot, AlertItem, CameraArea, LayerKey, Metric, NavKey, SceneMarker, SecurityCamera, Visitor, VisitorArea, VisitorException } from './types'
 
-export const navItems: { key: NavKey; label: string }[] = [
+export const navItems: { key: NavKey | 'more'; label: string; disabled?: boolean }[] = [
   { key: 'overview', label: '综合态势' },
-  { key: 'device', label: '设备监测' },
   { key: 'security', label: '安全监控' },
-  { key: 'people', label: '人员管理' },
-  { key: 'emergency', label: '应急指挥' },
+  { key: 'people', label: '访客管理' },
+  { key: 'more', label: '更多模块', disabled: true },
 ]
 
 const baseMetrics: Metric[] = [
@@ -19,7 +18,6 @@ const baseMetrics: Metric[] = [
 
 export const metricsByNav: Record<NavKey, Metric[]> = {
   overview: baseMetrics,
-  device: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '运行设备', value: '2,114', unit: '台' } : m),
   security: [
     { label: '摄像头总数', value: '326', unit: '台', delta: '3.2%', positive: true, icon: 'VideoCameraFilled' },
     { label: '摄像头在线率', value: '97.9', unit: '%', delta: '0.8%', positive: true, icon: 'Connection' },
@@ -36,7 +34,6 @@ export const metricsByNav: Record<NavKey, Metric[]> = {
     { label: '超时滞留', value: '3', unit: '人', delta: '0', positive: false, icon: 'Timer' },
     { label: '当前异常人数', value: '6', unit: '人', delta: '0', positive: false, icon: 'WarningFilled' },
   ],
-  emergency: baseMetrics.map((m, i) => i === 0 ? { ...m, label: '应急资源完好率', value: '99.1', unit: '%' } : m),
 }
 
 export const layerItems: { key: LayerKey; label: string; icon: string }[] = [
@@ -108,18 +105,19 @@ export const securityCameraAreas: CameraArea[] = [
 ]
 
 export const securityCameras: SecurityCamera[] = [
-  { id: 'cam-e01', name: '东门入口枪机 E01', areaId: 'east-gate', area: '东门及访客区', x: 80.5, y: 41, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, posterPosition: '82% 43%' },
-  { id: 'cam-e02', name: '访客通道球机 E02', areaId: 'east-gate', area: '东门及访客区', x: 84, y: 45.5, status: 'offline', algorithms: ['安全帽'], alertCount: 0, posterPosition: '79% 46%' },
-  { id: 'cam-w11', name: '1#车间东侧 W11', areaId: 'workshop-1', area: '1#生产车间', x: 32.5, y: 44, status: 'alarm', algorithms: ['危险作业', '安全帽', '反光衣'], alertCount: 2, posterPosition: '31% 44%' },
-  { id: 'cam-w12', name: '1#车间装配线 W12', areaId: 'workshop-1', area: '1#生产车间', x: 37.5, y: 48, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, posterPosition: '37% 47%' },
-  { id: 'cam-w21', name: '2#车间西侧 W21', areaId: 'workshop-2', area: '2#生产车间', x: 51.5, y: 31.5, status: 'abnormal', algorithms: ['烟雾', '危险作业'], alertCount: 0, posterPosition: '52% 34%' },
-  { id: 'cam-w22', name: '2#车间通道 W22', areaId: 'workshop-2', area: '2#生产车间', x: 57, y: 36.5, status: 'online', algorithms: ['安全帽'], alertCount: 0, posterPosition: '57% 36%' },
-  { id: 'cam-h01', name: '危化品库南侧 H01', areaId: 'hazmat', area: '危险品仓库', x: 63.5, y: 52, status: 'alarm', algorithms: ['明火', '烟雾'], alertCount: 3, posterPosition: '64% 52%' },
-  { id: 'cam-h02', name: '危化品库装卸区 H02', areaId: 'hazmat', area: '危险品仓库', x: 68.5, y: 57, status: 'online', algorithms: ['明火', '危险作业'], alertCount: 0, posterPosition: '69% 57%' },
-  { id: 'cam-r01', name: '原料库西侧 R01', areaId: 'warehouse', area: '原料仓储区', x: 46.5, y: 64, status: 'online', algorithms: ['明火', '反光衣'], alertCount: 0, posterPosition: '45% 63%' },
-  { id: 'cam-r02', name: '原料库通道 R02', areaId: 'warehouse', area: '原料仓储区', x: 52, y: 68, status: 'alarm', algorithms: ['烟雾', '安全帽'], alertCount: 1, posterPosition: '52% 67%' },
-  { id: 'cam-s01', name: '污水站北侧 S01', areaId: 'water', area: '污水处理站', x: 73.5, y: 28, status: 'online', algorithms: ['危险作业', '反光衣'], alertCount: 0, posterPosition: '74% 30%' },
-  { id: 'cam-s02', name: '污水站池区 S02', areaId: 'water', area: '污水处理站', x: 78.5, y: 32.5, status: 'online', algorithms: ['危险作业'], alertCount: 0, posterPosition: '79% 32%' },
+  { id: 'cam-e01', name: '东门入口枪机 E01', areaId: 'east-gate', area: '东门及访客区', x: 80.5, y: 41, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, videoUrl: '/assets/videos/cam-e01.mp4', posterPosition: '82% 43%' },
+  { id: 'cam-e02', name: '访客通道球机 E02', areaId: 'east-gate', area: '东门及访客区', x: 84, y: 45.5, status: 'online', algorithms: ['安全帽'], alertCount: 0, videoUrl: '/assets/videos/cam-e02.mp4', posterPosition: '79% 46%' },
+  { id: 'cam-e05', name: '东门外围枪机 E05', areaId: 'east-gate', area: '东门及访客区', x: 78, y: 47.5, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, videoUrl: '/assets/videos/cam-e05.mp4', posterPosition: '77% 48%' },
+  { id: 'cam-w11', name: '1#车间东侧 W11', areaId: 'workshop-1', area: '1#生产车间', x: 32.5, y: 44, status: 'alarm', algorithms: ['危险作业', '安全帽', '反光衣'], alertCount: 2, videoUrl: '/assets/videos/cam-w11.mp4', posterPosition: '31% 44%' },
+  { id: 'cam-w12', name: '1#车间装配线 W12', areaId: 'workshop-1', area: '1#生产车间', x: 37.5, y: 48, status: 'online', algorithms: ['安全帽', '反光衣'], alertCount: 0, videoUrl: '/assets/videos/cam-w12.mp4', posterPosition: '37% 47%' },
+  { id: 'cam-w21', name: '2#车间西侧 W21', areaId: 'workshop-2', area: '2#生产车间', x: 51.5, y: 31.5, status: 'abnormal', algorithms: ['烟雾', '危险作业'], alertCount: 0, videoUrl: '/assets/videos/cam-w21.mp4', posterPosition: '52% 34%' },
+  { id: 'cam-w22', name: '2#车间通道 W22', areaId: 'workshop-2', area: '2#生产车间', x: 57, y: 36.5, status: 'online', algorithms: ['安全帽'], alertCount: 0, videoUrl: '/assets/videos/cam-w22.mp4', posterPosition: '57% 36%' },
+  { id: 'cam-h01', name: '危化品库南侧 H01', areaId: 'hazmat', area: '危险品仓库', x: 63.5, y: 52, status: 'alarm', algorithms: ['明火', '烟雾'], alertCount: 3, videoUrl: '/assets/videos/cam-h01.mp4', posterPosition: '64% 52%' },
+  { id: 'cam-h02', name: '危化品库装卸区 H02', areaId: 'hazmat', area: '危险品仓库', x: 68.5, y: 57, status: 'online', algorithms: ['明火', '危险作业'], alertCount: 0, videoUrl: '/assets/videos/cam-h02.mp4', posterPosition: '69% 57%' },
+  { id: 'cam-r01', name: '原料库西侧 R01', areaId: 'warehouse', area: '原料仓储区', x: 46.5, y: 64, status: 'online', algorithms: ['明火', '反光衣'], alertCount: 0, videoUrl: '/assets/videos/cam-r01.mp4', posterPosition: '45% 63%' },
+  { id: 'cam-r02', name: '原料库通道 R02', areaId: 'warehouse', area: '原料仓储区', x: 52, y: 68, status: 'alarm', algorithms: ['烟雾', '安全帽'], alertCount: 1, videoUrl: '/assets/videos/cam-r02.mp4', posterPosition: '52% 67%' },
+  { id: 'cam-s01', name: '污水站北侧 S01', areaId: 'water', area: '污水处理站', x: 73.5, y: 28, status: 'online', algorithms: ['危险作业', '反光衣'], alertCount: 0, videoUrl: '/assets/videos/cam-s01.mp4', posterPosition: '74% 30%' },
+  { id: 'cam-s02', name: '污水站池区 S02', areaId: 'water', area: '污水处理站', x: 78.5, y: 32.5, status: 'online', algorithms: ['危险作业'], alertCount: 0, videoUrl: '/assets/videos/cam-s02.mp4', posterPosition: '79% 32%' },
 ]
 
 export const aiCategoryStats: AiCategoryStat[] = [
@@ -139,12 +137,12 @@ export const alarmHotspots: AlarmHotspot[] = [
 ]
 
 export const aiAlerts: AiAlert[] = [
-  { id: 'ai-001', orderNo: 'AI-20260717-001', cameraId: 'cam-h01', algorithm: '明火', level: '严重', content: '危化品库装卸区检测到疑似明火', area: '危险品仓库', time: '14:00:22', status: '处理中', assignee: '陈志强', snapshotPosition: '64% 52%', videoTime: 12 },
-  { id: 'ai-002', orderNo: 'AI-20260717-002', cameraId: 'cam-w11', algorithm: '危险作业', level: '关注', content: '作业人员进入设备吊装警戒区', area: '1#生产车间', time: '13:58:33', status: '待确认', assignee: '待分派', snapshotPosition: '31% 44%', videoTime: 8 },
-  { id: 'ai-003', orderNo: 'AI-20260717-003', cameraId: 'cam-r02', algorithm: '安全帽', level: '一般', content: '检测到人员未佩戴安全帽', area: '原料仓储区', time: '13:55:18', status: '待确认', assignee: '待分派', snapshotPosition: '52% 67%', videoTime: 16 },
-  { id: 'ai-004', orderNo: 'AI-20260717-004', cameraId: 'cam-h01', algorithm: '烟雾', level: '严重', content: '仓库南侧检测到烟雾扩散', area: '危险品仓库', time: '13:49:06', status: '已处理', assignee: '周海峰', snapshotPosition: '66% 54%', videoTime: 21 },
-  { id: 'ai-005', orderNo: 'AI-20260717-005', cameraId: 'cam-w21', algorithm: '烟雾', level: '关注', content: '焊接区域烟雾浓度持续升高', area: '2#生产车间', time: '13:42:51', status: '处理中', assignee: '王建国', snapshotPosition: '52% 34%', videoTime: 10 },
-  { id: 'ai-006', orderNo: 'AI-20260717-006', cameraId: 'cam-e01', algorithm: '反光衣', level: '一般', content: '访客通道人员未穿反光衣', area: '东门及访客区', time: '13:36:29', status: '已处理', assignee: '李晓明', snapshotPosition: '82% 43%', videoTime: 6 },
+  { id: 'ai-001', orderNo: 'AI-20260717-001', cameraId: 'cam-h01', algorithm: '明火', level: '严重', content: '危化品库装卸区检测到疑似明火', area: '危险品仓库', time: '14:00:22', status: '处理中', assignee: '陈志强', snapshotUrl: '/assets/images/ai-001.jpg', snapshotPosition: '64% 52%', videoTime: 12 },
+  { id: 'ai-002', orderNo: 'AI-20260717-002', cameraId: 'cam-w11', algorithm: '危险作业', level: '关注', content: '作业人员进入设备吊装警戒区', area: '1#生产车间', time: '13:58:33', status: '待确认', assignee: '待分派', snapshotUrl: '/assets/images/ai-002.jpg', snapshotPosition: '31% 44%', videoTime: 8 },
+  { id: 'ai-003', orderNo: 'AI-20260717-003', cameraId: 'cam-r02', algorithm: '安全帽', level: '一般', content: '检测到人员未佩戴安全帽', area: '原料仓储区', time: '13:55:18', status: '待确认', assignee: '待分派', snapshotUrl: '/assets/images/ai-003.jpg', snapshotPosition: '52% 67%', videoTime: 16 },
+  { id: 'ai-004', orderNo: 'AI-20260717-004', cameraId: 'cam-h01', algorithm: '烟雾', level: '严重', content: '仓库南侧检测到烟雾扩散', area: '危险品仓库', time: '13:49:06', status: '已处理', assignee: '周海峰', snapshotUrl: '/assets/images/ai-004.jpg', snapshotPosition: '66% 54%', videoTime: 21 },
+  { id: 'ai-005', orderNo: 'AI-20260717-005', cameraId: 'cam-w21', algorithm: '烟雾', level: '关注', content: '焊接区域烟雾浓度持续升高', area: '2#生产车间', time: '13:42:51', status: '处理中', assignee: '王建国', snapshotUrl: '/assets/images/ai-005.jpg', snapshotPosition: '52% 34%', videoTime: 10 },
+  { id: 'ai-006', orderNo: 'AI-20260717-006', cameraId: 'cam-e01', algorithm: '反光衣', level: '一般', content: '访客通道人员未穿反光衣', area: '东门及访客区', time: '13:36:29', status: '已处理', assignee: '李晓明', snapshotUrl: '/assets/images/ai-006.jpg', snapshotPosition: '82% 43%', videoTime: 6 },
 ]
 
 export const visitorAreas: VisitorArea[] = [

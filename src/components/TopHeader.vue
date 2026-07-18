@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { FullScreen, MostlyCloudy } from '@element-plus/icons-vue'
 import { navItems } from '../data/mock'
+import type { NavKey } from '../data/types'
 import { useDashboardStore } from '../stores/dashboard'
 
 const store = useDashboardStore()
@@ -14,6 +15,9 @@ async function toggleFullscreen() {
   if (!document.fullscreenElement) await document.documentElement.requestFullscreen()
   else await document.exitFullscreen()
 }
+function switchNav(key: NavKey | 'more', disabled = false) {
+  if (!disabled && key !== 'more') store.activeNav = key
+}
 </script>
 
 <template>
@@ -23,14 +27,14 @@ async function toggleFullscreen() {
       <span>智慧能源 · 赋能美好</span>
     </div>
     <nav class="nav nav--left">
-      <button v-for="item in navItems.slice(0, 2)" :key="item.key" :class="{ active: store.activeNav === item.key }" @click="store.activeNav = item.key">{{ item.label }}</button>
+      <button v-for="item in navItems.slice(0, 2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
     </nav>
     <div class="title-block">
       <h1>正泰集团厂区运营中心</h1>
       <p>CHINT GROUP FACTORY OPERATIONS CENTER</p>
     </div>
     <nav class="nav nav--right">
-      <button v-for="item in navItems.slice(2)" :key="item.key" :class="{ active: store.activeNav === item.key }" @click="store.activeNav = item.key">{{ item.label }}</button>
+      <button v-for="item in navItems.slice(2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
     </nav>
     <div class="weather">
       <span>{{ clock }}</span>

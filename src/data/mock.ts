@@ -145,12 +145,12 @@ export const alarmHotspots: AlarmHotspot[] = [
 ]
 
 export const aiAlerts: AiAlert[] = [
-  { id: 'ai-001', orderNo: 'AI-20260717-001', cameraId: 'cam-h01', algorithm: '明火', level: '严重', content: '危化品库装卸区检测到疑似明火', area: '危险品仓库', time: '14:00:22', status: '处理中', assignee: '陈志强', snapshotUrl: '/assets/images/ai-001.jpg', snapshotPosition: '64% 52%', videoTime: 12 },
+  { id: 'ai-001', orderNo: 'AI-20260717-001', cameraId: 'cam-h01', algorithm: '明火', level: '严重', content: '危化品库装卸区检测到疑似明火', area: '危险品仓库', time: '14:00:22', status: '待确认', assignee: '待分派', snapshotUrl: '/assets/images/ai-001.jpg', snapshotPosition: '64% 52%', videoTime: 12 },
   { id: 'ai-002', orderNo: 'AI-20260717-002', cameraId: 'cam-w11', algorithm: '危险作业', level: '关注', content: '作业人员进入设备吊装警戒区', area: '1#生产车间', time: '13:58:33', status: '待确认', assignee: '待分派', snapshotUrl: '/assets/images/ai-002.jpg', snapshotPosition: '31% 44%', videoTime: 8 },
   { id: 'ai-003', orderNo: 'AI-20260717-003', cameraId: 'cam-r02', algorithm: '安全帽', level: '一般', content: '检测到人员未佩戴安全帽', area: '原料仓储区', time: '13:55:18', status: '待确认', assignee: '待分派', snapshotUrl: '/assets/images/ai-003.jpg', snapshotPosition: '52% 67%', videoTime: 16 },
-  { id: 'ai-004', orderNo: 'AI-20260717-004', cameraId: 'cam-h01', algorithm: '烟雾', level: '严重', content: '仓库南侧检测到烟雾扩散', area: '危险品仓库', time: '13:49:06', status: '已处理', assignee: '周海峰', snapshotUrl: '/assets/images/ai-004.jpg', snapshotPosition: '66% 54%', videoTime: 21 },
-  { id: 'ai-005', orderNo: 'AI-20260717-005', cameraId: 'cam-w21', algorithm: '烟雾', level: '关注', content: '焊接区域烟雾浓度持续升高', area: '2#生产车间', time: '13:42:51', status: '处理中', assignee: '王建国', snapshotUrl: '/assets/images/ai-005.jpg', snapshotPosition: '52% 34%', videoTime: 10 },
-  { id: 'ai-006', orderNo: 'AI-20260717-006', cameraId: 'cam-e01', algorithm: '反光衣', level: '一般', content: '访客通道人员未穿反光衣', area: '东门及访客区', time: '13:36:29', status: '已处理', assignee: '李晓明', snapshotUrl: '/assets/images/ai-006.jpg', snapshotPosition: '82% 43%', videoTime: 6 },
+  { id: 'ai-004', orderNo: 'AI-20260717-004', cameraId: 'cam-h01', algorithm: '烟雾', level: '严重', content: '仓库南侧检测到烟雾扩散', area: '危险品仓库', time: '13:49:06', status: '已归档', assignee: '周海峰', snapshotUrl: '/assets/images/ai-004.jpg', snapshotPosition: '66% 54%', videoTime: 21 },
+  { id: 'ai-005', orderNo: 'AI-20260717-005', cameraId: 'cam-w21', algorithm: '烟雾', level: '关注', content: '焊接区域烟雾浓度持续升高', area: '2#生产车间', time: '13:42:51', status: '待复核', assignee: '王建国', snapshotUrl: '/assets/images/ai-005.jpg', snapshotPosition: '52% 34%', videoTime: 10 },
+  { id: 'ai-006', orderNo: 'AI-20260717-006', cameraId: 'cam-e01', algorithm: '反光衣', level: '一般', content: '访客通道人员未穿反光衣', area: '东门及访客区', time: '13:36:29', status: '已归档', assignee: '李晓明', snapshotUrl: '/assets/images/ai-006.jpg', snapshotPosition: '82% 43%', videoTime: 6 },
 ]
 
 export const visitorAreas: VisitorArea[] = [

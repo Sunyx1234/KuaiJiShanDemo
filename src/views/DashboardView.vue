@@ -12,11 +12,18 @@ import SecurityWorkflowDock from '../components/SecurityWorkflowDock.vue'
 import VisitorLeft from '../components/VisitorLeft.vue'
 import VisitorRight from '../components/VisitorRight.vue'
 import VisitorTimelineDock from '../components/VisitorTimelineDock.vue'
+import { onBeforeUnmount, onMounted } from 'vue'
 import { useDashboardStore } from '../stores/dashboard'
 import { configureSecurityVideoUrls } from '../services/securityVideoUrls'
 
 const store = useDashboardStore()
 void configureSecurityVideoUrls()
+let workOrderPoller = 0
+onMounted(() => {
+  void store.loadWorkOrders()
+  workOrderPoller = window.setInterval(() => void store.loadWorkOrders(), 3000)
+})
+onBeforeUnmount(() => window.clearInterval(workOrderPoller))
 </script>
 
 <template>

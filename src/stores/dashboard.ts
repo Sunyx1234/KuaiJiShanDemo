@@ -1,7 +1,8 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import type { AiAlert, AiAlertStatus, AlertItem, LayerKey, NavKey, SceneMarker, SecurityCamera, SecurityRange, Visitor, VisitorException, VisitorExceptionStatus, VisitorScope, VisitorStatus, VisitorTrackRange } from '../data/types'
+import type { AiAlert, AiAlertStatus, AlertItem, LayerKey, NavKey, SceneMarker, SecurityCamera, SecurityRange, Visitor, VisitorException, VisitorExceptionStatus, VisitorScope, VisitorStatus, VisitorTrackRange, WorkOrder, WorkOrderIntegrationConfig } from '../data/types'
 import { aiAlerts, alerts, metricsByNav, sceneMarkers, securityCameras, visitorExceptions, visitors } from '../data/mock'
+import { dispatchWorkOrder as dispatchWorkOrderRequest, fetchWorkOrderConfig, fetchWorkOrders, reviewWorkOrder as reviewWorkOrderRequest } from '../services/workOrders'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const activeNav = ref<NavKey>('overview')
@@ -18,6 +19,14 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const aiAlertItems = ref<AiAlert[]>(aiAlerts.map(alert => ({ ...alert })))
   const aiAlertStatus = ref<'全部告警' | AiAlertStatus>('全部告警')
   const hotspotRange = ref<SecurityRange>('today')
+  const workOrders = ref<WorkOrder[]>([])
+  const workOrderConfig = ref<WorkOrderIntegrationConfig>({
+    assignee: '现场责任人',
+    department: '安全生产部',
+    feishuConfigured: false,
+    smsConfigured: false,
+  })
+  const workOrderServiceError = ref('')
   const requestedVideoTime = ref(0)
   const visitorScope = ref<VisitorScope>('当前在厂')
   const visitorStatus = ref<'全部状态' | VisitorStatus>('全部状态')
@@ -45,6 +54,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const filteredAiAlerts = computed(() => aiAlertStatus.value === '全部告警'
     ? aiAlertItems.value
     : aiAlertItems.value.filter(a => a.status === aiAlertStatus.value))
+  const selectedWorkOrder = computed(() => workOrders.value.find(order => order.alertId === selectedAiAlert.value?.id) ?? null)
   const filteredVisitors = computed(() => visitors.filter(visitor => {
     const scopeMatched = visitorScope.value === '全部访客'
       || visitorScope.value === '今日入厂'
@@ -115,8 +125,51 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   function processAiAlert(action: 'dismiss' | 'notify') {
     if (!selectedAiAlert.value || selectedAiAlert.value.status !== '待确认') return
-    selectedAiAlert.value.status = action === 'dismiss' ? '已处理' : '处理中'
-    selectedAiAlert.value.assignee = action === 'dismiss' ? '系统归档' : '张伟'
+    selectedAiAlert.value.status = action === 'dismiss' ? '已排除' : '待派单'
+    selectedAiAlert.value.assignee = action === 'dismiss' ? '系统归档' : '待分派'
+  }
+
+  function applyWorkOrder(order: WorkOrder) {
+    const index = workOrders.value.findIndex(item => item.id === order.id)
+    if (index >= 0) workOrders.value[index] = order
+    else workOrders.value.unshift(order)
+    const alert = aiAlertItems.value.find(item => item.id === order.alertId)
+    if (alert) {
+      alert.status = order.status
+      alert.assignee = order.assignee
+    }
+  }
+
+  async function loadWorkOrders() {
+    try {
+      const [orders, config] = await Promise.all([fetchWorkOrders(), fetchWorkOrderConfig()])
+      workOrders.value = orders
+      workOrderConfig.value = config
+      orders.forEach(order => {
+        const alert = aiAlertItems.value.find(item => item.id === order.alertId)
+        if (alert) {
+          alert.status = order.status
+          alert.assignee = order.assignee
+        }
+      })
+      workOrderServiceError.value = ''
+    } catch (reason) {
+      workOrderServiceError.value = reason instanceof Error ? reason.message : '工单服务连接失败'
+    }
+  }
+
+  async function dispatchSelectedAiAlert(input: { adminPin: string; deadlineMinutes: number; requirement: string }) {
+    if (!selectedAiAlert.value) throw new Error('请先选择告警')
+    const result = await dispatchWorkOrderRequest(selectedAiAlert.value, input)
+    applyWorkOrder(result.order)
+    return result
+  }
+
+  async function reviewSelectedWorkOrder(input: { adminPin: string; decision: 'approve' | 'reject'; comment?: string }) {
+    if (!selectedWorkOrder.value) throw new Error('当前告警没有关联工单')
+    const order = await reviewWorkOrderRequest(selectedWorkOrder.value.id, input)
+    applyWorkOrder(order)
+    return order
   }
 
   function enterVisitorManagement() {
@@ -152,9 +205,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
   return {
     activeNav, activeLayer, selectedMarker, selectedAlert, alertCategory, riskFilter, energyType, timeDimension,
     expandedCameraArea, selectedCamera, selectedAiAlert, aiAlertItems, aiAlertStatus, hotspotRange, requestedVideoTime,
+    workOrders, selectedWorkOrder, workOrderConfig, workOrderServiceError,
     visitorScope, visitorStatus, visitorAreaFilter, expandedVisitorArea, selectedVisitor, selectedVisitorException,
     visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
     metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
-    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
+    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, dispatchSelectedAiAlert, reviewSelectedWorkOrder,
+    enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
   }
 })

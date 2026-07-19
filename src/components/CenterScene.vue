@@ -4,6 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { alerts, layerItems, sceneMarkers, securityCameraAreas, securityCameras, visitorAreas, visitors } from '../data/mock'
 import { useDashboardStore } from '../stores/dashboard'
 import type { LayerKey } from '../data/types'
+import { getSavedAdminPin } from '../services/workOrders'
 import BaseChart from './BaseChart.vue'
 
 const store = useDashboardStore()
@@ -20,6 +21,14 @@ const now = ref(new Date())
 const overviewCycleIndex = ref(0)
 const overviewVisitorMotionTick = ref(0)
 const activeOverviewCameraIds = ref<string[]>([])
+const workflowMode = ref<'detail' | 'dispatch'>('detail')
+const workflowBusy = ref(false)
+const workflowError = ref('')
+const dispatchAdminPin = ref(getSavedAdminPin())
+const dispatchDeadline = ref(30)
+const dispatchRequirement = ref('请立即核查并消除现场隐患，完成后上传处置照片')
+const dispatchedMobileUrl = ref('')
+const reviewComment = ref('')
 let timer = 0
 let overviewMotionTimer = 0
 const clock = computed(() => new Intl.DateTimeFormat('zh-CN', {
@@ -52,6 +61,17 @@ const selectedCameraAlerts = computed(() => store.selectedCamera
   ? ['14:00:22 明火识别 · 处理中', '13:49:06 烟雾识别 · 已处理'].slice(0, Math.max(store.selectedCamera.alertCount, 1))
   : [])
 const selectedAiAlertCamera = computed(() => securityCameras.find(camera => camera.id === store.selectedAiAlert?.cameraId))
+const selectedWorkOrder = computed(() => store.selectedWorkOrder)
+const alertWorkflowSteps = computed(() => {
+  const status = store.selectedAiAlert?.status
+  const order = selectedWorkOrder.value
+  const current = status === '待确认' ? 0
+    : status === '待派单' ? 1
+      : status === '处理中' ? (order?.progress === '待接单' ? 2 : 3)
+        : status === '待复核' ? 4
+          : status === '已归档' ? 5 : 0
+  return ['确认', '派单', '待接单', '已接单', '复核', '归档'].map((label, index) => ({ label, active: index <= current, current: index === current }))
+})
 const overviewAlertMarkers = computed(() => alerts.flatMap(alert => {
   const marker = sceneMarkers.find(item => item.id === alert.markerId)
   return marker ? [{ alert, x: marker.x, y: marker.y }] : []
@@ -129,6 +149,55 @@ watch(() => store.selectedCamera?.id, () => {
   videoLoadFailed.value = false
   previewPlaying.value = true
 })
+watch(() => store.selectedAiAlert?.id, () => {
+  workflowMode.value = store.selectedAiAlert?.status === '待派单' && !store.selectedWorkOrder ? 'dispatch' : 'detail'
+  workflowError.value = ''
+  dispatchedMobileUrl.value = ''
+  reviewComment.value = ''
+})
+function startDispatch() {
+  store.processAiAlert('notify')
+  workflowMode.value = 'dispatch'
+}
+async function submitDispatch() {
+  workflowBusy.value = true
+  workflowError.value = ''
+  try {
+    const result = await store.dispatchSelectedAiAlert({
+      adminPin: dispatchAdminPin.value,
+      deadlineMinutes: dispatchDeadline.value,
+      requirement: dispatchRequirement.value.trim(),
+    })
+    dispatchedMobileUrl.value = result.mobileUrl
+    workflowMode.value = 'detail'
+  } catch (reason) {
+    workflowError.value = reason instanceof Error ? reason.message : '工单派发失败'
+  } finally {
+    workflowBusy.value = false
+  }
+}
+async function submitReview(decision: 'approve' | 'reject') {
+  workflowBusy.value = true
+  workflowError.value = ''
+  try {
+    await store.reviewSelectedWorkOrder({
+      adminPin: dispatchAdminPin.value,
+      decision,
+      comment: reviewComment.value.trim(),
+    })
+    reviewComment.value = ''
+  } catch (reason) {
+    workflowError.value = reason instanceof Error ? reason.message : '工单复核失败'
+  } finally {
+    workflowBusy.value = false
+  }
+}
+function formatWorkOrderTime(value?: string) {
+  if (!value) return '—'
+  return new Intl.DateTimeFormat('zh-CN', {
+    month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
+  }).format(new Date(value)).replaceAll('/', '-')
+}
 const hasPlayableVideo = computed(() => Boolean(store.selectedCamera?.videoUrl) && !videoLoadFailed.value)
 function togglePreview() {
   previewPlaying.value = !previewPlaying.value
@@ -222,6 +291,11 @@ const detailTrend = computed(() => ({
             <strong>{{ store.selectedAiAlert.content }}</strong>
             <small>{{ store.selectedAiAlert.orderNo }}</small>
           </section>
+          <div class="work-order-stepper">
+            <span v-for="step in alertWorkflowSteps" :key="step.label" :class="{ active: step.active, current: step.current }">
+              <i />{{ step.label }}
+            </span>
+          </div>
           <div class="security-alert-detail-meta">
             <span>发生时间<b>2026-07-17 {{ store.selectedAiAlert.time }}</b></span>
             <span>所属区域<b>{{ store.selectedAiAlert.area }}</b></span>
@@ -229,17 +303,64 @@ const detailTrend = computed(() => ({
             <span>工单状态<b :class="`status-${store.selectedAiAlert.status}`">{{ store.selectedAiAlert.status }}</b></span>
             <span class="wide">处理责任人<b>{{ store.selectedAiAlert.assignee }}</b></span>
           </div>
-          <section v-if="store.selectedAiAlert.status === '待确认'" class="security-work-order-actions">
+          <section v-if="workflowMode === 'dispatch'" class="work-order-dispatch-form">
+            <header><span><small>DISPATCH WORK ORDER</small><b>创建处置工单</b></span><em>飞书通知</em></header>
+            <div class="dispatch-grid">
+              <label>责任部门<input :value="store.workOrderConfig.department" disabled /></label>
+              <label>责任人<input :value="store.workOrderConfig.assignee" disabled /></label>
+              <label>处置时限<select v-model="dispatchDeadline"><option :value="15">15 分钟</option><option :value="30">30 分钟</option><option :value="60">1 小时</option><option :value="120">2 小时</option></select></label>
+              <label>管理口令<input v-model="dispatchAdminPin" type="password" placeholder="Netlify 管理口令" /></label>
+              <label class="wide">处置要求<textarea v-model="dispatchRequirement" maxlength="200" /></label>
+            </div>
+            <div class="dispatch-channel">
+              <span><i :class="{ online: store.workOrderConfig.feishuConfigured }" />飞书主通知<b>{{ store.workOrderConfig.feishuConfigured ? '已配置' : '待配置' }}</b></span>
+              <span><i :class="{ online: store.workOrderConfig.smsConfigured }" />短信辅助<b>{{ store.workOrderConfig.smsConfigured ? '已配置' : '后续接入' }}</b></span>
+            </div>
+            <footer><button @click="workflowMode = 'detail'">返回告警</button><button class="primary" :disabled="workflowBusy" @click="submitDispatch">{{ workflowBusy ? '正在派单…' : '确认派单' }}</button></footer>
+          </section>
+          <section v-else-if="store.selectedAiAlert.status === '待确认'" class="security-work-order-actions">
             <div>
               <small>告警工单待确认</small>
-              <b>请选择处置方式，处理结果将同步更新告警状态</b>
+              <b>请确认是否需要生成现场处置工单</b>
             </div>
-            <button class="dismiss" @click="store.processAiAlert('dismiss')">消除告警</button>
-            <button class="notify" @click="store.processAiAlert('notify')">通知责任人</button>
+            <button class="dismiss" @click="store.processAiAlert('dismiss')">排除告警</button>
+            <button class="notify" @click="startDispatch">确认为有效</button>
+          </section>
+          <section v-else-if="selectedWorkOrder" class="work-order-live-detail">
+            <div v-if="dispatchedMobileUrl" class="dispatch-success">
+              <i>✓</i><span><b>工单派发成功</b><small>飞书卡片已提交发送，可用手机打开移动端</small></span>
+              <a :href="dispatchedMobileUrl" target="_blank">打开移动端</a>
+            </div>
+            <div class="work-order-current">
+              <span><small>当前进展</small><b>{{ selectedWorkOrder.progress }}</b></span>
+              <span><small>完成时限</small><b>{{ formatWorkOrderTime(selectedWorkOrder.deadlineAt) }}</b></span>
+              <span><small>飞书通知</small><b :class="{ danger: selectedWorkOrder.notifications[0]?.status === '发送失败' }">{{ selectedWorkOrder.notifications[0]?.status }}</b></span>
+            </div>
+            <div v-if="selectedWorkOrder.status === '待复核'" class="work-order-review">
+              <header><b>处置前后证据复核</b><small>{{ selectedWorkOrder.photos.length }} 张处置照片</small></header>
+              <div class="review-photos">
+                <figure><img :src="store.selectedAiAlert.snapshotUrl" /><figcaption>原始告警抓拍</figcaption></figure>
+                <figure v-for="photo in selectedWorkOrder.photos" :key="photo.key"><img :src="photo.url" /><figcaption>现场处置照片</figcaption></figure>
+              </div>
+              <p v-if="selectedWorkOrder.cause"><span>原因说明</span>{{ selectedWorkOrder.cause }}</p>
+              <p v-if="selectedWorkOrder.measures"><span>处置措施</span>{{ selectedWorkOrder.measures }}</p>
+              <div class="review-controls">
+                <input v-model="dispatchAdminPin" type="password" placeholder="管理口令" />
+                <input v-model="reviewComment" placeholder="退回原因（退回时必填）" />
+                <button :disabled="workflowBusy" @click="submitReview('reject')">退回补充</button>
+                <button class="approve" :disabled="workflowBusy" @click="submitReview('approve')">复核归档</button>
+              </div>
+            </div>
+            <ol class="work-order-timeline">
+              <li v-for="item in [...selectedWorkOrder.timeline].reverse().slice(0, 4)" :key="item.id">
+                <i /><span><b>{{ item.title }}</b><small>{{ item.detail }}</small></span><time>{{ item.time.slice(-8) }}</time>
+              </li>
+            </ol>
           </section>
           <section v-else class="security-work-order-result">
-            <span>{{ store.selectedAiAlert.status === '已处理' ? '✓ 告警已消除并归档' : '↗ 已通知责任人，工单处理中' }}</span>
+            <span>{{ store.selectedAiAlert.status === '已排除' ? '✓ 告警已排除并记录确认结果' : store.selectedAiAlert.status === '已归档' ? '✓ 工单已完成电子归档' : '↗ 工单状态等待同步' }}</span>
           </section>
+          <p v-if="workflowError" class="work-order-error">{{ workflowError }}</p>
         </aside>
         <aside v-else-if="store.selectedCamera" class="security-video-preview">
           <header>

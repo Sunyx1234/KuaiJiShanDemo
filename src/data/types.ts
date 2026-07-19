@@ -4,7 +4,9 @@ export type LayerKey = 'overview' | 'building' | 'device' | 'people' | 'camera' 
 export type CameraStatus = 'online' | 'offline' | 'abnormal' | 'alarm'
 export type AiAlgorithm = '明火' | '烟雾' | '危险作业' | '安全帽' | '反光衣'
 export type AiAlertLevel = '一般' | '关注' | '严重'
-export type AiAlertStatus = '待确认' | '处理中' | '已处理'
+export type AiAlertStatus = '待确认' | '待派单' | '处理中' | '待复核' | '已归档' | '已排除'
+export type WorkOrderProgress = '待接单' | '已接单' | '已处置'
+export type WorkOrderNotificationChannel = '飞书' | '短信'
 export type SecurityRange = 'today' | '7d' | '30d'
 export type VisitorStatus = '正常' | '即将超时' | '超时滞留' | '限制区告警' | '定位失联' | '已离厂'
 export type VisitorScope = '全部访客' | '当前在厂' | '今日入厂' | '今日已离厂' | '异常访客'
@@ -93,6 +95,65 @@ export interface AiAlert {
   snapshotUrl?: string
   snapshotPosition: string
   videoTime: number
+}
+
+export interface WorkOrderTimelineItem {
+  id: string
+  time: string
+  title: string
+  detail: string
+  actor: string
+}
+
+export interface WorkOrderNotification {
+  channel: WorkOrderNotificationChannel
+  status: '发送成功' | '发送失败' | '待发送'
+  time: string
+  detail?: string
+}
+
+export interface WorkOrderPhoto {
+  key: string
+  name: string
+  url: string
+}
+
+export interface WorkOrder {
+  id: string
+  orderNo: string
+  alertId: string
+  cameraId: string
+  algorithm: AiAlgorithm
+  level: AiAlertLevel
+  content: string
+  area: string
+  alertTime: string
+  snapshotUrl?: string
+  status: Exclude<AiAlertStatus, '待确认' | '待派单' | '已排除'>
+  progress: WorkOrderProgress
+  department: string
+  assignee: string
+  requirement: string
+  deadlineMinutes: number
+  deadlineAt: string
+  acceptedAt?: string
+  submittedAt?: string
+  cause?: string
+  measures?: string
+  photos: WorkOrderPhoto[]
+  reviewComment?: string
+  archivedNo?: string
+  notifications: WorkOrderNotification[]
+  timeline: WorkOrderTimelineItem[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface WorkOrderIntegrationConfig {
+  assignee: string
+  department: string
+  feishuConfigured: boolean
+  smsConfigured: boolean
 }
 
 export interface AiCategoryStat {

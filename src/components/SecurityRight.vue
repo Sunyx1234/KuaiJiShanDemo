@@ -6,12 +6,15 @@ import { useDashboardStore } from '../stores/dashboard'
 import type { AiAlertStatus } from '../data/types'
 
 const store = useDashboardStore()
-const statuses: ('全部告警' | AiAlertStatus)[] = ['全部告警', '待确认', '处理中', '已处理']
+const statuses: ('全部告警' | AiAlertStatus)[] = ['全部告警', '待确认', '处理中', '待复核', '已归档']
 const statusCount = computed(() => ({
   全部告警: store.aiAlertItems.length,
   待确认: store.aiAlertItems.filter(item => item.status === '待确认').length,
+  待派单: store.aiAlertItems.filter(item => item.status === '待派单').length,
   处理中: store.aiAlertItems.filter(item => item.status === '处理中').length,
-  已处理: store.aiAlertItems.filter(item => item.status === '已处理').length,
+  待复核: store.aiAlertItems.filter(item => item.status === '待复核').length,
+  已归档: store.aiAlertItems.filter(item => item.status === '已归档').length,
+  已排除: store.aiAlertItems.filter(item => item.status === '已排除').length,
 }))
 const levelClass = (level: string) => level === '严重' ? 'critical' : level === '关注' ? 'attention' : 'normal'
 </script>

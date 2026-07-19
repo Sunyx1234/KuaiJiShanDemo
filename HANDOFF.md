@@ -170,6 +170,31 @@ src/main.ts
 - 底部展示工单处理流程和状态数据。
 - 摄像头在线率与环形图比例已保持一致。
 
+### 告警工单闭环与飞书接入
+
+第一阶段告警闭环已实现：
+
+```text
+待确认 → 待派单 → 处理中（待接单 / 已接单）→ 待复核 → 已归档
+```
+
+- 驾驶舱告警详情已升级为处置中心，支持确认有效、创建工单、查看飞书发送结果、查看移动端处理进展、处置前后照片复核、退回补充和复核归档。
+- 派单使用飞书企业自建应用真实发送工单卡片，卡片按钮打开移动 H5；短信保留为辅助通道占位。
+- 移动作业端路由为 `/#/work-order?token=<随机工单令牌>`，支持接单、上传 1～3 张处置照片、选填原因和处置措施并提交复核。
+- 工单与照片使用 Netlify Blobs 站点级存储，生产部署更新后数据继续保留；驾驶舱每 3 秒同步一次工单状态。
+- 后端入口为 `netlify/functions/work-orders.mjs`，前端服务封装为 `src/services/workOrders.ts`。
+- 工单管理操作需要 `WORK_ORDER_ADMIN_PIN`；该口令只配置在 Netlify，不能写入前端或仓库。
+- 飞书生产环境变量：
+  - `FEISHU_APP_ID`
+  - `FEISHU_APP_SECRET`
+  - `FEISHU_RECEIVER_ID_TYPE`（推荐先用 `email`）
+  - `FEISHU_RECEIVER_ID`
+  - `FEISHU_RECEIVER_NAME`
+  - `FEISHU_RECEIVER_DEPARTMENT`
+  - `PUBLIC_SITE_URL=https://tiny-bienenstitch-386238.netlify.app`
+- 飞书应用必须启用机器人能力、开通“以应用的身份发消息”权限、发布版本，并将责任人加入应用可用范围。
+- `App Secret` 等凭证严禁发到聊天、提交仓库或使用 `VITE_*` 前缀。
+
 状态和模拟数据位于：
 
 - `src/data/types.ts`：`SecurityCamera`、`AiAlert`、`AlarmHotspot` 等。
@@ -279,6 +304,7 @@ src/main.ts
 - Windows 环境执行 npm 后偶尔显示用户目录 npm 路径权限提示，但构建本身返回成功。
 - Git 可能提示无法访问用户级 `.config/git/ignore`，不影响仓库状态和提交。
 - 视频监控已接入本地录像素材模拟实时画面，仍未连接真实视频流。
+- 工单闭环生产端需要 Netlify Blobs 和飞书环境变量；纯 Vite 本地开发只能验证界面，不能直接调用 Netlify Functions。
 - `public/assets/videos/` 素材总量约 1.32 GB，已通过 `.gitignore` 排除，不得强制提交至 GitHub。
 - `public/assets/images/` 中仅 `ai-*.jpg` 告警截图允许提交；原始录频、检测结果、Excel 和批量抽帧均被忽略。
 - 13 个监控视频已上传至私有阿里云 OSS：`ztvideos/chint-dashboard/videos/`（上海地域）。本地开发仍读取被 Git 忽略的 `public/assets/videos/`；Netlify 生产环境通过 `netlify/functions/video-urls.mjs` 使用 RAM 只读密钥签发 4 小时有效的视频地址，前端接线位于 `src/services/securityVideoUrls.ts`。

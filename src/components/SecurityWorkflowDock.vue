@@ -5,12 +5,17 @@ import { useDashboardStore } from '../stores/dashboard'
 import { securityCameras } from '../data/mock'
 
 const store = useDashboardStore()
-const pendingCount = computed(() => store.aiAlertItems.filter(item => item.status === '待确认').length)
+const pendingCount = computed(() => store.aiAlertItems.filter(item => ['待确认', '待派单'].includes(item.status)).length)
 const processingCount = computed(() => store.aiAlertItems.filter(item => item.status === '处理中').length)
-const resolvedCount = computed(() => store.aiAlertItems.filter(item => item.status === '已处理').length)
+const reviewCount = computed(() => store.aiAlertItems.filter(item => item.status === '待复核').length)
+const resolvedCount = computed(() => store.aiAlertItems.filter(item => ['已归档', '已排除'].includes(item.status)).length)
 const closureRate = computed(() => Math.round(resolvedCount.value / store.aiAlertItems.length * 100))
 const scrollingOrders = computed(() => [...store.aiAlertItems, ...store.aiAlertItems])
-const statusClass = (status: string) => status === '已处理' ? 'resolved' : status === '处理中' ? 'processing' : 'pending'
+const statusClass = (status: string) => ['已归档', '已排除'].includes(status) ? 'resolved' : ['处理中', '待复核'].includes(status) ? 'processing' : 'pending'
+const progressText = (alertId: string, status: string) => {
+  const order = store.workOrders.find(item => item.alertId === alertId)
+  return order?.progress || status
+}
 </script>
 
 <template>
@@ -31,7 +36,7 @@ const statusClass = (status: string) => status === '已处理' ? 'resolved' : st
               <small>{{ order.algorithm }} · {{ order.time }}</small>
             </span>
             <span class="ledger-area"><b>{{ order.area }}</b><small>{{ securityCameras.find(camera => camera.id === order.cameraId)?.name }}</small></span>
-            <span><em :class="statusClass(order.status)">{{ order.status }}</em></span>
+            <span><em :class="statusClass(order.status)">{{ progressText(order.id, order.status) }}</em></span>
             <span class="ledger-owner"><i>{{ order.assignee.slice(0, 1) }}</i><b>{{ order.assignee }}</b></span>
           </button>
         </div>
@@ -42,6 +47,7 @@ const statusClass = (status: string) => status === '已处理' ? 'resolved' : st
       <div class="workflow-counts compact">
         <span><i class="pending" />待确认<b>{{ pendingCount }}</b></span>
         <span><i class="processing" />处理中<b>{{ processingCount }}</b></span>
+        <span><i class="processing" />待复核<b>{{ reviewCount }}</b></span>
         <span><i class="resolved" />已处理<b>{{ resolvedCount }}</b></span>
       </div>
     </HudPanel>

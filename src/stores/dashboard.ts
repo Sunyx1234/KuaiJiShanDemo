@@ -140,20 +140,33 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
-  async function loadWorkOrders() {
+  async function loadWorkOrderConfig() {
     try {
-      const [orders, config] = await Promise.all([fetchWorkOrders(), fetchWorkOrderConfig()])
-      workOrders.value = orders
-      workOrderConfig.value = config
-      orders.forEach(order => {
+      workOrderConfig.value = await fetchWorkOrderConfig()
+      return workOrderConfig.value
+    } catch (reason) {
+      workOrderServiceError.value = reason instanceof Error ? reason.message : '飞书配置加载失败'
+      return workOrderConfig.value
+    }
+  }
+
+  async function loadWorkOrders() {
+    const [ordersResult, configResult] = await Promise.allSettled([fetchWorkOrders(), fetchWorkOrderConfig()])
+    if (ordersResult.status === 'fulfilled') {
+      workOrders.value = ordersResult.value
+      ordersResult.value.forEach(order => {
         const alert = aiAlertItems.value.find(item => item.id === order.alertId)
         if (alert) {
           alert.status = order.status
           alert.assignee = order.assignee
         }
       })
+    }
+    if (configResult.status === 'fulfilled') workOrderConfig.value = configResult.value
+    if (ordersResult.status === 'fulfilled' || configResult.status === 'fulfilled') {
       workOrderServiceError.value = ''
-    } catch (reason) {
+    } else {
+      const reason = ordersResult.reason || configResult.reason
       workOrderServiceError.value = reason instanceof Error ? reason.message : '工单服务连接失败'
     }
   }
@@ -209,7 +222,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     visitorScope, visitorStatus, visitorAreaFilter, expandedVisitorArea, selectedVisitor, selectedVisitorException,
     visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
     metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
-    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, dispatchSelectedAiAlert, reviewSelectedWorkOrder,
+    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, loadWorkOrderConfig, dispatchSelectedAiAlert, reviewSelectedWorkOrder,
     enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
   }
 })

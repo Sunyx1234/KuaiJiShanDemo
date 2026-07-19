@@ -155,9 +155,17 @@ watch(() => store.selectedAiAlert?.id, () => {
   dispatchedMobileUrl.value = ''
   reviewComment.value = ''
 })
-function startDispatch() {
-  store.processAiAlert('notify')
-  workflowMode.value = 'dispatch'
+async function startDispatch() {
+  workflowBusy.value = true
+  workflowError.value = ''
+  try {
+    await store.loadWorkOrderConfig()
+    store.processAiAlert('notify')
+    workflowMode.value = 'dispatch'
+    if (!store.workOrderConfig.feishuConfigured) workflowError.value = '飞书配置尚未加载，请稍后重试'
+  } finally {
+    workflowBusy.value = false
+  }
 }
 async function submitDispatch() {
   workflowBusy.value = true
@@ -307,7 +315,7 @@ const detailTrend = computed(() => ({
             <header><span><small>DISPATCH WORK ORDER</small><b>创建处置工单</b></span><em>飞书通知</em></header>
             <div class="dispatch-grid">
               <label>责任部门<input :value="store.workOrderConfig.department" disabled /></label>
-              <label>责任人<input :value="store.workOrderConfig.assignee" disabled /></label>
+              <label>责任人<input :value="store.workOrderConfig.assignee" disabled title="当前仅配置一位飞书责任人" /></label>
               <label>处置时限<select v-model="dispatchDeadline"><option :value="15">15 分钟</option><option :value="30">30 分钟</option><option :value="60">1 小时</option><option :value="120">2 小时</option></select></label>
               <label>管理口令<input v-model="dispatchAdminPin" type="password" placeholder="Netlify 管理口令" /></label>
               <label class="wide">处置要求<textarea v-model="dispatchRequirement" maxlength="200" /></label>

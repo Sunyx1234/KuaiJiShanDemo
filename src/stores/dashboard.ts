@@ -185,11 +185,15 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return order
   }
 
-  async function retrySelectedWorkOrderNotification(adminPin: string) {
+  async function retrySelectedWorkOrderNotification(input: {
+    adminPin: string
+    deadlineMinutes: number
+    requirement: string
+  }) {
     if (!selectedWorkOrder.value) throw new Error('当前告警没有关联工单')
-    const order = await retryWorkOrderNotification(selectedWorkOrder.value.id, adminPin)
-    applyWorkOrder(order)
-    return order
+    const result = await retryWorkOrderNotification(selectedWorkOrder.value.id, input)
+    applyWorkOrder(result.order)
+    return result
   }
 
   function enterVisitorManagement() {

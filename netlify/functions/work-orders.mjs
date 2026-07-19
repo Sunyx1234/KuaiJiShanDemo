@@ -270,10 +270,18 @@ async function handleRetryNotification(payload, origin) {
   const key = String(payload.orderId || '').replace(/^wo-/, '')
   const order = await orderStore().get(`${ORDER_PREFIX}${key}`, { type: 'json' })
   if (!order) return json({ message: '未找到关联工单' }, 404)
+  const deadlineMinutes = Number(payload.deadlineMinutes)
+  if (![15, 30, 60, 120].includes(deadlineMinutes)) return json({ message: '处置时限无效' }, 400)
+  order.deadlineMinutes = deadlineMinutes
+  order.deadlineAt = addMinutes(deadlineMinutes)
+  order.requirement = String(payload.requirement || '').slice(0, 200)
+  order.department = process.env.FEISHU_RECEIVER_DEPARTMENT || order.department || '安全生产部'
+  order.assignee = process.env.FEISHU_RECEIVER_NAME || order.assignee || '现场责任人'
   const mobileUrl = `${process.env.PUBLIC_SITE_URL || origin}/#/work-order?token=${order.mobileToken}`
   try {
     order.feishuMessageId = await sendFeishuOrder(order, mobileUrl)
     order.notifications[0] = { channel: '飞书', status: '发送成功', time: nowText(), detail: '工单卡片已送达飞书' }
+    order.timeline.push({ id: randomUUID(), time: nowText(), title: '工单已重新派发', detail: `责任人：${order.assignee}，时限：${deadlineMinutes} 分钟`, actor: '值班管理员' })
     order.timeline.push({ id: randomUUID(), time: nowText(), title: '飞书消息重试成功', detail: '工单卡片已重新发送给责任人', actor: '消息中心' })
   } catch (error) {
     order.notifications[0] = { channel: '飞书', status: '发送失败', time: nowText(), detail: error.message }
@@ -281,7 +289,7 @@ async function handleRetryNotification(payload, origin) {
   }
   order.updatedAt = new Date().toISOString()
   await orderStore().setJSON(`${ORDER_PREFIX}${order.alertId}`, order)
-  return json({ order: publicOrder(order, origin) })
+  return json({ order: publicOrder(order, origin), mobileUrl })
 }
 
 export default async (request) => {
@@ -318,13 +326,13 @@ export default async (request) => {
     if (contentType.includes('multipart/form-data')) {
       const form = await request.formData()
       if (form.get('action') !== 'submit') return json({ message: '操作无效' }, 400)
-      return handleSubmit(request, form, origin)
+      return await handleSubmit(request, form, origin)
     }
     const payload = await request.json()
-    if (payload.action === 'dispatch') return handleDispatch(payload, origin)
-    if (payload.action === 'accept') return handleAccept(payload, origin)
-    if (payload.action === 'review') return handleReview(payload, origin)
-    if (payload.action === 'retry-notification') return handleRetryNotification(payload, origin)
+    if (payload.action === 'dispatch') return await handleDispatch(payload, origin)
+    if (payload.action === 'accept') return await handleAccept(payload, origin)
+    if (payload.action === 'review') return await handleReview(payload, origin)
+    if (payload.action === 'retry-notification') return await handleRetryNotification(payload, origin)
     return json({ message: '操作无效' }, 400)
   } catch (error) {
     console.error('Work order function failed.', error)

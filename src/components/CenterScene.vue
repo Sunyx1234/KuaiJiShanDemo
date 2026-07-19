@@ -62,6 +62,7 @@ const selectedCameraAlerts = computed(() => store.selectedCamera
   : [])
 const selectedAiAlertCamera = computed(() => securityCameras.find(camera => camera.id === store.selectedAiAlert?.cameraId))
 const selectedWorkOrder = computed(() => store.selectedWorkOrder)
+const isRetryDispatch = computed(() => Boolean(selectedWorkOrder.value))
 const alertWorkflowSteps = computed(() => {
   const status = store.selectedAiAlert?.status
   const order = selectedWorkOrder.value
@@ -171,11 +172,14 @@ async function submitDispatch() {
   workflowBusy.value = true
   workflowError.value = ''
   try {
-    const result = await store.dispatchSelectedAiAlert({
+    const input = {
       adminPin: dispatchAdminPin.value,
       deadlineMinutes: dispatchDeadline.value,
       requirement: dispatchRequirement.value.trim(),
-    })
+    }
+    const result = isRetryDispatch.value
+      ? await store.retrySelectedWorkOrderNotification(input)
+      : await store.dispatchSelectedAiAlert(input)
     dispatchedMobileUrl.value = result.mobileUrl
     workflowMode.value = 'detail'
   } catch (reason) {
@@ -200,16 +204,11 @@ async function submitReview(decision: 'approve' | 'reject') {
     workflowBusy.value = false
   }
 }
-async function retryFeishuNotification() {
-  workflowBusy.value = true
+function retryFeishuNotification() {
   workflowError.value = ''
-  try {
-    await store.retrySelectedWorkOrderNotification(dispatchAdminPin.value)
-  } catch (reason) {
-    workflowError.value = reason instanceof Error ? reason.message : '飞书消息重试失败'
-  } finally {
-    workflowBusy.value = false
-  }
+  dispatchDeadline.value = selectedWorkOrder.value?.deadlineMinutes ?? 30
+  dispatchRequirement.value = selectedWorkOrder.value?.requirement || '请立即核查并消除现场隐患，完成后上传处置照片'
+  workflowMode.value = 'dispatch'
 }
 function formatWorkOrderTime(value?: string) {
   if (!value) return '—'
@@ -323,7 +322,7 @@ const detailTrend = computed(() => ({
             <span class="wide">处理责任人<b>{{ store.selectedAiAlert.assignee }}</b></span>
           </div>
           <section v-if="workflowMode === 'dispatch'" class="work-order-dispatch-form">
-            <header><span><small>DISPATCH WORK ORDER</small><b>创建处置工单</b></span><em>飞书通知</em></header>
+            <header><span><small>DISPATCH WORK ORDER</small><b>{{ isRetryDispatch ? '重新派发处置工单' : '创建处置工单' }}</b></span><em>飞书通知</em></header>
             <div class="dispatch-grid">
               <label>责任部门<input :value="store.workOrderConfig.department" disabled /></label>
               <label>责任人<input :value="store.workOrderConfig.assignee" disabled title="当前仅配置一位飞书责任人" /></label>
@@ -335,7 +334,7 @@ const detailTrend = computed(() => ({
               <span><i :class="{ online: store.workOrderConfig.feishuConfigured }" />飞书主通知<b>{{ store.workOrderConfig.feishuConfigured ? '已配置' : '待配置' }}</b></span>
               <span><i :class="{ online: store.workOrderConfig.smsConfigured }" />短信辅助<b>{{ store.workOrderConfig.smsConfigured ? '已配置' : '后续接入' }}</b></span>
             </div>
-            <footer><button @click="workflowMode = 'detail'">返回告警</button><button class="primary" :disabled="workflowBusy" @click="submitDispatch">{{ workflowBusy ? '正在派单…' : '确认派单' }}</button></footer>
+            <footer><button @click="workflowMode = 'detail'">返回告警</button><button class="primary" :disabled="workflowBusy" @click="submitDispatch">{{ workflowBusy ? '正在发送…' : isRetryDispatch ? '确认重新发送' : '确认派单' }}</button></footer>
           </section>
           <section v-else-if="store.selectedAiAlert.status === '待确认'" class="security-work-order-actions">
             <div>

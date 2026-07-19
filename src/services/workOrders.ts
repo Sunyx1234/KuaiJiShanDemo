@@ -64,15 +64,19 @@ export async function reviewWorkOrder(orderId: string, input: {
   return body.order
 }
 
-export async function retryWorkOrderNotification(orderId: string, adminPin: string) {
+export async function retryWorkOrderNotification(orderId: string, input: {
+  adminPin: string
+  deadlineMinutes: number
+  requirement: string
+}) {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action: 'retry-notification', orderId, adminPin }),
+    body: JSON.stringify({ action: 'retry-notification', orderId, ...input }),
   })
-  const body = await parseResponse<{ order: WorkOrder }>(response)
-  saveAdminPin(adminPin)
-  return body.order
+  const body = await parseResponse<{ order: WorkOrder; mobileUrl: string }>(response)
+  saveAdminPin(input.adminPin)
+  return body
 }
 
 export async function fetchMobileWorkOrder(token: string) {

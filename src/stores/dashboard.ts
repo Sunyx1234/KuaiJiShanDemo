@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { AiAlert, AiAlertStatus, AlertItem, LayerKey, NavKey, SceneMarker, SecurityCamera, SecurityRange, Visitor, VisitorException, VisitorExceptionStatus, VisitorScope, VisitorStatus, VisitorTrackRange, WorkOrder, WorkOrderIntegrationConfig } from '../data/types'
 import { aiAlerts, alerts, metricsByNav, sceneMarkers, securityCameras, visitorExceptions, visitors } from '../data/mock'
-import { dispatchWorkOrder as dispatchWorkOrderRequest, fetchWorkOrderConfig, fetchWorkOrders, reviewWorkOrder as reviewWorkOrderRequest } from '../services/workOrders'
+import { dispatchWorkOrder as dispatchWorkOrderRequest, fetchWorkOrderConfig, fetchWorkOrders, retryWorkOrderNotification, reviewWorkOrder as reviewWorkOrderRequest } from '../services/workOrders'
 
 export const useDashboardStore = defineStore('dashboard', () => {
   const activeNav = ref<NavKey>('overview')
@@ -185,6 +185,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return order
   }
 
+  async function retrySelectedWorkOrderNotification(adminPin: string) {
+    if (!selectedWorkOrder.value) throw new Error('当前告警没有关联工单')
+    const order = await retryWorkOrderNotification(selectedWorkOrder.value.id, adminPin)
+    applyWorkOrder(order)
+    return order
+  }
+
   function enterVisitorManagement() {
     activeNav.value = 'people'
     visitorScope.value = '当前在厂'
@@ -222,7 +229,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     visitorScope, visitorStatus, visitorAreaFilter, expandedVisitorArea, selectedVisitor, selectedVisitorException,
     visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
     metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
-    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, loadWorkOrderConfig, dispatchSelectedAiAlert, reviewSelectedWorkOrder,
+    locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, loadWorkOrderConfig, dispatchSelectedAiAlert, reviewSelectedWorkOrder, retrySelectedWorkOrderNotification,
     enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
   }
 })

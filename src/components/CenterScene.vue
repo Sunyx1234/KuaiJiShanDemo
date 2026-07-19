@@ -200,6 +200,17 @@ async function submitReview(decision: 'approve' | 'reject') {
     workflowBusy.value = false
   }
 }
+async function retryFeishuNotification() {
+  workflowBusy.value = true
+  workflowError.value = ''
+  try {
+    await store.retrySelectedWorkOrderNotification(dispatchAdminPin.value)
+  } catch (reason) {
+    workflowError.value = reason instanceof Error ? reason.message : '飞书消息重试失败'
+  } finally {
+    workflowBusy.value = false
+  }
+}
 function formatWorkOrderTime(value?: string) {
   if (!value) return '—'
   return new Intl.DateTimeFormat('zh-CN', {
@@ -342,7 +353,7 @@ const detailTrend = computed(() => ({
             <div class="work-order-current">
               <span><small>当前进展</small><b>{{ selectedWorkOrder.progress }}</b></span>
               <span><small>完成时限</small><b>{{ formatWorkOrderTime(selectedWorkOrder.deadlineAt) }}</b></span>
-              <span><small>飞书通知</small><b :class="{ danger: selectedWorkOrder.notifications[0]?.status === '发送失败' }">{{ selectedWorkOrder.notifications[0]?.status }}</b></span>
+              <span><small>飞书通知</small><b :class="{ danger: selectedWorkOrder.notifications[0]?.status === '发送失败' }">{{ selectedWorkOrder.notifications[0]?.status }}</b><button v-if="selectedWorkOrder.notifications[0]?.status === '发送失败'" :disabled="workflowBusy" @click="retryFeishuNotification">重试发送</button></span>
             </div>
             <div v-if="selectedWorkOrder.status === '待复核'" class="work-order-review">
               <header><b>处置前后证据复核</b><small>{{ selectedWorkOrder.photos.length }} 张处置照片</small></header>

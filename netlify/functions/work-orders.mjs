@@ -265,6 +265,25 @@ async function handleReview(payload, origin) {
   return json({ order: publicOrder(order, origin) })
 }
 
+async function handleRetryNotification(payload, origin) {
+  requireAdminPin(payload.adminPin)
+  const key = String(payload.orderId || '').replace(/^wo-/, '')
+  const order = await orderStore().get(`${ORDER_PREFIX}${key}`, { type: 'json' })
+  if (!order) return json({ message: '未找到关联工单' }, 404)
+  const mobileUrl = `${process.env.PUBLIC_SITE_URL || origin}/#/work-order?token=${order.mobileToken}`
+  try {
+    order.feishuMessageId = await sendFeishuOrder(order, mobileUrl)
+    order.notifications[0] = { channel: '飞书', status: '发送成功', time: nowText(), detail: '工单卡片已送达飞书' }
+    order.timeline.push({ id: randomUUID(), time: nowText(), title: '飞书消息重试成功', detail: '工单卡片已重新发送给责任人', actor: '消息中心' })
+  } catch (error) {
+    order.notifications[0] = { channel: '飞书', status: '发送失败', time: nowText(), detail: error.message }
+    order.timeline.push({ id: randomUUID(), time: nowText(), title: '飞书消息重试失败', detail: error.message, actor: '消息中心' })
+  }
+  order.updatedAt = new Date().toISOString()
+  await orderStore().setJSON(`${ORDER_PREFIX}${order.alertId}`, order)
+  return json({ order: publicOrder(order, origin) })
+}
+
 export default async (request) => {
   const url = new URL(request.url)
   const origin = `${url.protocol}//${url.host}`
@@ -305,6 +324,7 @@ export default async (request) => {
     if (payload.action === 'dispatch') return handleDispatch(payload, origin)
     if (payload.action === 'accept') return handleAccept(payload, origin)
     if (payload.action === 'review') return handleReview(payload, origin)
+    if (payload.action === 'retry-notification') return handleRetryNotification(payload, origin)
     return json({ message: '操作无效' }, 400)
   } catch (error) {
     console.error('Work order function failed.', error)

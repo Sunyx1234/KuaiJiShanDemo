@@ -13,3 +13,8 @@ dist/
 *.log
 current-preview.png
 .DS_Store
+
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*

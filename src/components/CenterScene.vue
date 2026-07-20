@@ -29,6 +29,7 @@ const dispatchDeadline = ref(30)
 const dispatchRequirement = ref('请立即核查并消除现场隐患，完成后上传处置照片')
 const dispatchedMobileUrl = ref('')
 const reviewComment = ref('')
+const reviewImage = ref<{ url: string; caption: string } | null>(null)
 let timer = 0
 let overviewMotionTimer = 0
 const clock = computed(() => new Intl.DateTimeFormat('zh-CN', {
@@ -123,7 +124,10 @@ function syncFullscreenMedia() {
   else fullscreenMedia.value = null
 }
 function handleFullscreenKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') fallbackFullscreenMedia.value = null
+  if (event.key === 'Escape') {
+    fallbackFullscreenMedia.value = null
+    reviewImage.value = null
+  }
 }
 onMounted(() => {
   timer = window.setInterval(() => now.value = new Date(), 1000)
@@ -209,6 +213,9 @@ function retryFeishuNotification() {
   dispatchDeadline.value = selectedWorkOrder.value?.deadlineMinutes ?? 30
   dispatchRequirement.value = selectedWorkOrder.value?.requirement || '请立即核查并消除现场隐患，完成后上传处置照片'
   workflowMode.value = 'dispatch'
+}
+function openReviewImage(url: string, caption: string) {
+  reviewImage.value = { url, caption }
 }
 function formatWorkOrderTime(value?: string) {
   if (!value) return '—'
@@ -357,8 +364,12 @@ const detailTrend = computed(() => ({
             <div v-if="selectedWorkOrder.status === '待复核'" class="work-order-review">
               <header><b>处置前后证据复核</b><small>{{ selectedWorkOrder.photos.length }} 张处置照片</small></header>
               <div class="review-photos">
-                <figure><img :src="store.selectedAiAlert.snapshotUrl" /><figcaption>原始告警抓拍</figcaption></figure>
-                <figure v-for="photo in selectedWorkOrder.photos" :key="photo.key"><img :src="photo.url" /><figcaption>现场处置照片</figcaption></figure>
+                <figure role="button" tabindex="0" title="点击全屏查看" @click="openReviewImage(store.selectedAiAlert.snapshotUrl || '', '原始告警抓拍')" @keydown.enter="openReviewImage(store.selectedAiAlert.snapshotUrl || '', '原始告警抓拍')">
+                  <img :src="store.selectedAiAlert.snapshotUrl" /><figcaption>原始告警抓拍 · 点击放大</figcaption>
+                </figure>
+                <figure v-for="(photo, index) in selectedWorkOrder.photos" :key="photo.key" role="button" tabindex="0" title="点击全屏查看" @click="openReviewImage(photo.url, `现场处置照片 ${index + 1}`)" @keydown.enter="openReviewImage(photo.url, `现场处置照片 ${index + 1}`)">
+                  <img :src="photo.url" /><figcaption>现场处置照片 {{ index + 1 }} · 点击放大</figcaption>
+                </figure>
               </div>
               <p v-if="selectedWorkOrder.cause"><span>原因说明</span>{{ selectedWorkOrder.cause }}</p>
               <p v-if="selectedWorkOrder.measures"><span>处置措施</span>{{ selectedWorkOrder.measures }}</p>
@@ -584,4 +595,11 @@ const detailTrend = computed(() => ({
       </aside>
     </transition>
   </section>
+  <Teleport to="body">
+    <div v-if="reviewImage" class="review-image-lightbox" role="dialog" aria-modal="true" :aria-label="reviewImage.caption" @click.self="reviewImage = null">
+      <button class="review-image-lightbox__close" aria-label="关闭全屏图片" @click="reviewImage = null">×</button>
+      <img :src="reviewImage.url" :alt="reviewImage.caption" />
+      <p>{{ reviewImage.caption }}</p>
+    </div>
+  </Teleport>
 </template>

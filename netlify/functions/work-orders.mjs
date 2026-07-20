@@ -86,20 +86,21 @@ async function getTenantToken() {
   return body.tenant_access_token
 }
 
-function buildFeishuCard(order, mobileUrl) {
-  const template = order.level === '严重' ? 'red' : order.level === '关注' ? 'orange' : 'blue'
+function buildFeishuCard(order, mobileUrl, options = {}) {
+  const template = options.template || (order.level === '严重' ? 'red' : order.level === '关注' ? 'orange' : 'blue')
+  const content = options.content || `**${order.content}**\n区域：${order.area}\n告警时间：${order.alertTime}\n处置时限：${order.deadlineMinutes} 分钟\n派单要求：${order.requirement || '请及时核查并完成现场处置'}`
   return {
     config: { wide_screen_mode: true },
     header: {
       template,
-      title: { tag: 'plain_text', content: `${order.level}告警处置工单` },
+      title: { tag: 'plain_text', content: options.title || `${order.level}告警处置工单` },
     },
     elements: [
       {
         tag: 'div',
         text: {
           tag: 'lark_md',
-          content: `**${order.content}**\n区域：${order.area}\n告警时间：${order.alertTime}\n处置时限：${order.deadlineMinutes} 分钟\n派单要求：${order.requirement || '请及时核查并完成现场处置'}`,
+          content,
         },
       },
       { tag: 'hr' },
@@ -108,7 +109,7 @@ function buildFeishuCard(order, mobileUrl) {
         actions: [{
           tag: 'button',
           type: 'primary',
-          text: { tag: 'plain_text', content: '查看并接单' },
+          text: { tag: 'plain_text', content: options.buttonText || '查看并接单' },
           url: mobileUrl,
         }],
       },
@@ -116,7 +117,7 @@ function buildFeishuCard(order, mobileUrl) {
   }
 }
 
-async function sendFeishuOrder(order, mobileUrl) {
+async function sendFeishuOrder(order, mobileUrl, cardOptions) {
   const receiveId = process.env.FEISHU_RECEIVER_ID
   const receiveIdType = process.env.FEISHU_RECEIVER_ID_TYPE || 'open_id'
   if (!receiveId) throw new Error('飞书收件人尚未配置')
@@ -132,7 +133,7 @@ async function sendFeishuOrder(order, mobileUrl) {
       body: JSON.stringify({
         receive_id: receiveId,
         msg_type: 'interactive',
-        content: JSON.stringify(buildFeishuCard(order, mobileUrl)),
+        content: JSON.stringify(buildFeishuCard(order, mobileUrl, cardOptions)),
       }),
     },
   )
@@ -257,6 +258,20 @@ async function handleReview(payload, origin) {
     order.progress = '已接单'
     order.reviewComment = String(payload.comment).slice(0, 300)
     order.timeline.push({ id: randomUUID(), time: nowText(), title: '退回补充处置', detail: order.reviewComment, actor: '值班管理员' })
+    const mobileUrl = `${process.env.PUBLIC_SITE_URL || origin}/#/work-order?token=${order.mobileToken}`
+    try {
+      order.feishuMessageId = await sendFeishuOrder(order, mobileUrl, {
+        template: 'orange',
+        title: '工单复核退回',
+        content: `**${order.content}**\n工单编号：${order.orderNo}\n退回原因：${order.reviewComment}\n请补充现场处置并重新上传照片。`,
+        buttonText: '返回工单补充处置',
+      })
+      order.notifications[0] = { channel: '飞书', status: '发送成功', time: nowText(), detail: '复核退回通知已送达飞书' }
+      order.timeline.push({ id: randomUUID(), time: nowText(), title: '复核退回通知发送成功', detail: '责任人可通过飞书卡片继续处置', actor: '消息中心' })
+    } catch (error) {
+      order.notifications[0] = { channel: '飞书', status: '发送失败', time: nowText(), detail: error.message }
+      order.timeline.push({ id: randomUUID(), time: nowText(), title: '复核退回通知发送失败', detail: error.message, actor: '消息中心' })
+    }
   } else {
     return json({ message: '复核操作无效' }, 400)
   }

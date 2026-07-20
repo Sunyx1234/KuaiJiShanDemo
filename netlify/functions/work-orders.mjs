@@ -1,5 +1,15 @@
 import { randomUUID } from 'node:crypto'
-import { getStore } from '@netlify/blobs'
+import { getStore as getNetlifyStore } from '@netlify/blobs'
+
+let getStore = getNetlifyStore
+let writePhoto = (store, key, file, metadata) => store.set(key, file, { metadata })
+let readPhoto = (store, key) => store.getWithMetadata(key, { type: 'blob' })
+
+export function configureWorkOrderStorage(adapter) {
+  getStore = adapter.getStore
+  writePhoto = adapter.writePhoto
+  readPhoto = adapter.readPhoto
+}
 
 const orderStore = () => getStore({ name: 'chint-work-orders', consistency: 'strong' })
 const photoStore = () => getStore({ name: 'chint-work-order-photos', consistency: 'strong' })
@@ -40,7 +50,7 @@ function publicOrder(order, origin) {
     ...safe,
     photos: (safe.photos || []).map(photo => ({
       ...photo,
-      url: `${origin}/.netlify/functions/work-orders?photo=${encodeURIComponent(photo.key)}`,
+      url: `${origin}/api/work-orders?photo=${encodeURIComponent(photo.key)}`,
     })),
   }
 }
@@ -228,7 +238,7 @@ async function handleSubmit(request, form, origin) {
   const photos = []
   for (const file of files) {
     const key = `${order.id}/${randomUUID()}`
-    await photoStore().set(key, file, { metadata: { contentType: file.type, name: file.name, orderId: order.id } })
+    await writePhoto(photoStore(), key, file, { contentType: file.type, name: file.name, orderId: order.id })
     photos.push({ key, name: file.name })
   }
   order.photos = [...(order.photos || []), ...photos]
@@ -321,7 +331,7 @@ export default async (request) => {
     }
     if (request.method === 'GET' && url.searchParams.has('photo')) {
       const key = url.searchParams.get('photo')
-      const result = await photoStore().getWithMetadata(key, { type: 'blob' })
+      const result = await readPhoto(photoStore(), key)
       if (!result) return new Response('Not found', { status: 404 })
       return new Response(result.data, {
         headers: {

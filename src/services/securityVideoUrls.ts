@@ -15,7 +15,7 @@ export function configureSecurityVideoUrls(): Promise<void> {
     return configurePromise
   }
 
-  configurePromise = fetch('/.netlify/functions/video-urls', {
+  configurePromise = fetch('/api/video-urls', {
     headers: { Accept: 'application/json' },
   })
     .then(async (response) => {

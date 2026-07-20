@@ -1,6 +1,6 @@
 import type { AiAlert, WorkOrder, WorkOrderIntegrationConfig } from '../data/types'
 
-const endpoint = '/.netlify/functions/work-orders'
+const endpoint = '/api/work-orders'
 const adminPinKey = 'chint-work-order-admin-pin'
 
 async function parseResponse<T>(response: Response): Promise<T> {

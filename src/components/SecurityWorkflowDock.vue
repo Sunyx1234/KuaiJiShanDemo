@@ -9,9 +9,12 @@ const pendingCount = computed(() => store.aiAlertItems.filter(item => ['待确�
 const processingCount = computed(() => store.aiAlertItems.filter(item => item.status === '处理中').length)
 const reviewCount = computed(() => store.aiAlertItems.filter(item => item.status === '待复核').length)
 const resolvedCount = computed(() => store.aiAlertItems.filter(item => ['已归档', '已排除'].includes(item.status)).length)
-const closureRate = computed(() => Math.round(resolvedCount.value / store.aiAlertItems.length * 100))
+const closureRate = computed(() => store.aiAlertItems.length
+  ? Math.round(resolvedCount.value / store.aiAlertItems.length * 100)
+  : 0)
 const scrollingOrders = computed(() => [...store.aiAlertItems, ...store.aiAlertItems])
 const statusClass = (status: string) => ['已归档', '已排除'].includes(status) ? 'resolved' : ['处理中', '待复核'].includes(status) ? 'processing' : 'pending'
+const assigneeName = (assignee: string | null | undefined) => assignee?.trim() || '待分派'
 const progressText = (alertId: string, status: string) => {
   const order = store.workOrders.find(item => item.alertId === alertId)
   return order?.progress || status
@@ -37,7 +40,7 @@ const progressText = (alertId: string, status: string) => {
             </span>
             <span class="ledger-area"><b>{{ order.area }}</b><small>{{ securityCameras.find(camera => camera.id === order.cameraId)?.name }}</small></span>
             <span><em :class="statusClass(order.status)">{{ progressText(order.id, order.status) }}</em></span>
-            <span class="ledger-owner"><i>{{ order.assignee.slice(0, 1) }}</i><b>{{ order.assignee }}</b></span>
+            <span class="ledger-owner"><i>{{ assigneeName(order.assignee).slice(0, 1) }}</i><b>{{ assigneeName(order.assignee) }}</b></span>
           </button>
         </div>
       </div>

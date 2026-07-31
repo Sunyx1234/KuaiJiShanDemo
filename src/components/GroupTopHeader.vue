@@ -38,7 +38,7 @@ async function toggleFullscreen() {
     </div>
     <div class="weather">
       <span>{{ clock }}</span>
-      <span class="group-header-status"><i />全球园区数据互联</span>
+      <span class="group-header-status"><i />全球制造网络在线</span>
       <button aria-label="切换全屏" @click="toggleFullscreen"><el-icon><FullScreen /></el-icon></button>
     </div>
   </header>

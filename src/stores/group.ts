@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import {
   groupConnectivitySummary,
   groupNetworkSummary,
-  groupPerformanceTrend,
+  groupPerformanceOverview,
   groupShowcaseTopics,
   parks,
 } from '../data/group'
@@ -40,7 +40,7 @@ export const useGroupStore = defineStore('group', () => {
   return {
     parks,
     networkSummary: groupNetworkSummary,
-    performanceTrend: groupPerformanceTrend,
+    performanceOverview: groupPerformanceOverview,
     connectivitySummary: groupConnectivitySummary,
     showcaseTopics: groupShowcaseTopics,
     hoveredParkId,

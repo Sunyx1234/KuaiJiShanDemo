@@ -36,7 +36,7 @@ export interface ParkConfig {
   sceneAsset?: string
   summary: string
   products: string
-  scale: string
+  positioning: string
   pinOffset: { x: number; y: number }
 }
 

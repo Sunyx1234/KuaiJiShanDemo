@@ -67,8 +67,8 @@ const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 const surfaceNormal = new THREE.Vector3(0, 0, 1)
 const labelWidth = 108
 const labelHeight = 36
-const tooltipWidth = 336
-const tooltipEstimatedHeight = 148
+const tooltipWidth = 408
+const tooltipEstimatedHeight = 330
 const labelViewportPadding = 10
 
 function latLngToVector3(latitude: number, longitude: number, radius: number) {
@@ -581,7 +581,7 @@ function initializeScene() {
   try {
     scene = new THREE.Scene()
     camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100)
-    camera.position.set(0, 0.18, 4.45)
+    camera.position.set(0, 0.18, 4.3)
 
     renderer = new THREE.WebGLRenderer({
       antialias: true,
@@ -611,7 +611,7 @@ function initializeScene() {
     controls.enableDamping = true
     controls.dampingFactor = 0.055
     controls.enablePan = false
-    controls.minDistance = 2.25
+    controls.minDistance = 2.2
     controls.maxDistance = 5.8
     controls.zoomSpeed = 0.82
     controls.autoRotate = !reducedMotion.matches
@@ -687,7 +687,7 @@ function startParkFocus(park: ParkConfig, navigateOnComplete: boolean) {
   const cameraDirection = camera.position.clone().normalize()
   const rotationDelta = new THREE.Quaternion().setFromUnitVectors(anchorDirection, cameraDirection)
   const toQuaternion = rotationDelta.multiply(fromQuaternion.clone()).normalize()
-  const targetDistance = Math.max(controls.minDistance, 2.68)
+  const targetDistance = Math.max(controls.minDistance, 2.62)
 
   controls.autoRotate = false
   controls.enabled = false
@@ -775,6 +775,16 @@ onBeforeUnmount(disposeScene)
         </header>
         <h3>{{ store.hoveredPark.name }}</h3>
         <p>{{ store.hoveredPark.summary }}</p>
+        <dl>
+          <div>
+            <dt>主要产品</dt>
+            <dd>{{ store.hoveredPark.products }}</dd>
+          </div>
+          <div>
+            <dt>基地定位</dt>
+            <dd>{{ store.hoveredPark.positioning }}</dd>
+          </div>
+        </dl>
         <footer>
           <button v-if="store.hoveredPark.status === 'connected'" type="button"
             @click.stop="store.hoveredPark && openPark(store.hoveredPark)">

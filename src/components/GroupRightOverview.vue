@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import BaseChart from './BaseChart.vue'
 import { useGroupStore } from '../stores/group'
 
 const store = useGroupStore()
@@ -8,58 +7,6 @@ const showcaseIndex = ref(0)
 let showcaseTimer = 0
 
 const activeShowcase = computed(() => store.showcaseTopics[showcaseIndex.value])
-
-const performanceOption = computed(() => ({
-  tooltip: {
-    trigger: 'axis',
-    backgroundColor: 'rgba(3, 22, 40, .96)',
-    borderColor: '#2b7eaa',
-    textStyle: { color: '#ccecff', fontSize: 12 },
-    formatter: (params: Array<{ axisValue: string; value: number }>) =>
-      `${params[0]?.axisValue}<br/>增长指数 ${params[0]?.value}`,
-  },
-  grid: { left: 38, right: 12, top: 24, bottom: 30 },
-  xAxis: {
-    type: 'category',
-    boundaryGap: false,
-    data: store.performanceTrend.labels,
-    axisLabel: { color: '#6f94ad', fontSize: 11 },
-    axisLine: { lineStyle: { color: 'rgba(64, 127, 164, .4)' } },
-    axisTick: { show: false },
-  },
-  yAxis: {
-    type: 'value',
-    min: 90,
-    max: 180,
-    axisLabel: { color: '#597d96', fontSize: 10 },
-    axisLine: { show: false },
-    axisTick: { show: false },
-    splitLine: { lineStyle: { color: 'rgba(55, 110, 146, .18)' } },
-  },
-  series: [{
-    type: 'line',
-    smooth: 0.35,
-    showSymbol: true,
-    symbol: 'circle',
-    symbolSize: 7,
-    data: store.performanceTrend.values,
-    lineStyle: { color: '#56caff', width: 3 },
-    itemStyle: { color: '#a7ecff', borderColor: '#229fd8', borderWidth: 2 },
-    areaStyle: {
-      color: {
-        type: 'linear',
-        x: 0,
-        y: 0,
-        x2: 0,
-        y2: 1,
-        colorStops: [
-          { offset: 0, color: 'rgba(52, 184, 235, .34)' },
-          { offset: 1, color: 'rgba(52, 184, 235, .02)' },
-        ],
-      },
-    },
-  }],
-}))
 
 onMounted(() => {
   showcaseTimer = window.setInterval(() => {
@@ -82,19 +29,27 @@ function selectShowcase(index: number) {
           <span>BUSINESS GROWTH</span>
           <h2>经营业绩增长</h2>
         </div>
-        <small>公开口径 · 指数化展示</small>
+        <small>公开披露 · 不展示金额</small>
       </header>
-      <div class="group-performance-summary">
+      <div class="group-performance-lead">
         <div>
-          <span>最新增长指数</span>
-          <strong>{{ store.performanceTrend.currentIndex }}</strong>
-          <small>以 {{ store.performanceTrend.baseYear }} 年为基期 100</small>
+          <span>{{ store.performanceOverview.hero.period }}</span>
+          <strong>{{ store.performanceOverview.hero.value }}<small>{{ store.performanceOverview.hero.unit }}</small></strong>
+          <p>{{ store.performanceOverview.hero.label }}</p>
         </div>
-        <em>{{ store.performanceTrend.yearOnYear }}<small>同比增长</small></em>
+        <em><i />{{ store.performanceOverview.hero.badge }}</em>
       </div>
-      <div class="group-performance-chart">
-        <BaseChart :option="performanceOption" />
+      <div class="group-performance-indicators">
+        <article v-for="indicator in store.performanceOverview.indicators" :key="indicator.label">
+          <header>
+            <small>{{ indicator.period }}</small>
+            <i>↗</i>
+          </header>
+          <strong>{{ indicator.value }}<small>{{ indicator.unit }}</small></strong>
+          <span>{{ indicator.label }}</span>
+        </article>
       </div>
+      <p class="group-performance-note"><i />{{ store.performanceOverview.note }}</p>
     </section>
 
     <section class="group-showcase-panel group-achievement-panel">

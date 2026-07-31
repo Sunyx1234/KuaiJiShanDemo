@@ -636,3 +636,43 @@ button { font: inherit; color: inherit; }
 .group-park-pin.label-left>span{border-right-color:rgba(72,176,224,.46);background:linear-gradient(270deg,rgba(4,36,61,.56),rgba(4,25,45,.08))}
 .group-park-pin>span small{color:#52758a;opacity:.46;transition:opacity .18s,color .18s}
 .group-park-pin.hovered>span small{color:#7ea8bb;opacity:1}
+
+/* 嘉兴园区：恢复原有 HUD 外观，仅保留统一字号与列表可用性改进 */
+.park-dashboard{
+  --font-display:32px;
+  --font-panel-title:16px;
+  --font-metric-value:28px;
+  --font-section-title:15px;
+  --font-body:13px;
+  --font-label:12px;
+  --font-caption:11px;
+  --font-decorative:10px;
+}
+.park-dashboard .alert-panel .hud-panel__body{display:flex;flex-direction:column;overflow:hidden}
+.park-dashboard .alert-panel .filter-tabs{flex:0 0 23px}
+.park-dashboard .alert-panel .alert-list{
+  min-height:0;
+  flex:1;
+  overflow-x:hidden;
+  overflow-y:auto;
+  padding-right:3px;
+  scroll-behavior:smooth;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+  scrollbar-color:rgba(61,145,181,.52) transparent;
+}
+.park-dashboard .alert-panel .alert-list::-webkit-scrollbar{width:3px}
+.park-dashboard .alert-panel .alert-list::-webkit-scrollbar-track{background:transparent}
+.park-dashboard .alert-panel .alert-list::-webkit-scrollbar-thumb{background:rgba(61,145,181,.52)}
+.park-dashboard .alert-list button{width:100%;height:38px;flex:0 0 38px;border-bottom-color:rgba(42,90,121,.28)}
+.park-dashboard .visitor-exception-list>button>em{
+  width:50px;
+  height:24px;
+  display:inline-flex;
+  align-self:start;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  line-height:1;
+  white-space:nowrap;
+}

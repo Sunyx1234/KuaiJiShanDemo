@@ -76,7 +76,7 @@ onBeforeUnmount(stopParkServices)
 
 <template>
   <ScreenFrame>
-    <main class="dashboard">
+    <main class="dashboard" :class="{ 'park-dashboard': !isGroupLevel }">
       <GroupTopHeader v-if="isGroupLevel" />
       <TopHeader v-else :title="parkHeaderTitle" show-group-return />
 

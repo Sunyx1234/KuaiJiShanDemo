@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import HudPanel from './HudPanel.vue'
 import BaseChart from './BaseChart.vue'
 import { useDashboardStore } from '../stores/dashboard'
@@ -30,6 +30,36 @@ const peopleOption = computed(() => ({
   series: [{ type: 'line', data: [2310,2350,2480,2521,2505,2540,2521,2380,2320], smooth: true, showSymbol: true, symbolSize: 4, lineStyle: { color: '#2bbcff' }, areaStyle: { color: 'rgba(38,176,255,.15)' } }],
 }))
 const categories = ['全部', '设备', '人员', '环境', '其他']
+const alertListRef = ref<HTMLElement | null>(null)
+let alertScrollTimer = 0
+
+function stopAlertScroll() {
+  window.clearInterval(alertScrollTimer)
+  alertScrollTimer = 0
+}
+
+function startAlertScroll() {
+  stopAlertScroll()
+  alertScrollTimer = window.setInterval(() => {
+    const list = alertListRef.value
+    if (!list) return
+    const maxScroll = list.scrollHeight - list.clientHeight
+    if (maxScroll <= 1) return
+    const row = list.querySelector<HTMLElement>('button')
+    const step = row?.offsetHeight ?? 38
+    list.scrollTo({
+      top: list.scrollTop >= maxScroll - 1 ? 0 : Math.min(list.scrollTop + step, maxScroll),
+      behavior: 'smooth',
+    })
+  }, 2800)
+}
+
+watch(() => store.alertCategory, () => {
+  void nextTick(() => alertListRef.value?.scrollTo({ top: 0 }))
+  startAlertScroll()
+})
+onMounted(startAlertScroll)
+onBeforeUnmount(stopAlertScroll)
 </script>
 
 <template>
@@ -48,7 +78,7 @@ const categories = ['全部', '设备', '人员', '环境', '其他']
       <div class="filter-tabs">
         <button v-for="cat in categories" :key="cat" :class="{ active: store.alertCategory === cat }" @click="store.alertCategory = cat">{{ cat }}</button>
       </div>
-      <div class="alert-list">
+      <div ref="alertListRef" class="alert-list" @mouseenter="stopAlertScroll" @mouseleave="startAlertScroll">
         <button v-for="alert in store.filteredAlerts" :key="alert.id" :class="`tone-${alert.level}`" @click="store.locateAlert(alert)">
           <i>!</i>
           <span class="alert-content"><b>{{ alert.content }}</b><small>{{ alert.category }}告警</small></span>

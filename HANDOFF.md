@@ -5,6 +5,7 @@
 ## 1. 当前开发基线
 
 - 当前稳定版本提交：`4bb1937 Fix EdgeOne OSS function dependency`
+- 当前开发版本提交：`5770c37 Add global manufacturing globe dashboard`
 - 不可移动的稳定标签：`baseline-edgeone-2026-07-30`
 - 稳定分支：`main`，后续大规模开发期间不得直接提交或推送到该分支。
 - 当前开发分支：`codex/next-development`，已推送并跟踪 `origin/codex/next-development`。
@@ -13,39 +14,12 @@
 - Netlify 原生产地址：<https://tiny-bienenstitch-386238.netlify.app/>；当前已执行 **Lock and stop auto publish**，不会随 GitHub 推送自动更新。
 - 基准画布：`1920 × 1080`，由 `ScreenFrame.vue` 统一等比例缩放。
 - 当前版本已完成综合态势、AI 安全监控、访客实时管控和访客管理主题页；设备监测和应急指挥暂不开发，已移除导航入口。
-- 园区层仍需在现有视觉和交互体系上增量开发，不要重构成普通后台；集团层下一阶段将按用户提供的新方案进行 UI 重构，但必须保留集团/园区两级架构与地球组件能力。
+- 园区层仍需在现有视觉和交互体系上增量开发，不要重构成普通后台；集团层全球制造基地地球与对外展示 UI 已形成首个开发分支版本，后续继续保持集团/园区两级架构与地球组件能力。
 - `main`、`origin/main` 和基线标签当前都指向 `4bb1937`。如需恢复，优先从标签新建恢复分支，禁止为了回退而直接使用 `git reset --hard`。
 
-当前工作区包含一组完整但**尚未提交**的集团地球开发增量，不只是单个文件移动。新对话必须原样接管，不得执行 `git reset --hard`、`git checkout --`、批量删除、批量还原、擅自暂存或提交。
+集团/园区两级架构、三维地球、13 个全球制造基地、全屏地球背景、对外展示 UI、地球资源和相关园区回归修复已经提交并推送至 `origin/codex/next-development`，提交号为 `5770c37`。
 
-当前已修改文件：
-
-- `HANDOFF.md`
-- `package.json`
-- `package-lock.json`
-- `src/components/SecurityWorkflowDock.vue`
-- `src/components/TopHeader.vue`
-- `src/data/types.ts`
-- `src/router/index.ts`
-- `src/stores/dashboard.ts`
-- `src/styles/main.css`
-- `src/views/DashboardView.vue`
-
-当前新增且未跟踪的集团层代码与资源：
-
-- `src/components/GroupTopHeader.vue`
-- `src/components/GroupLeftOverview.vue`
-- `src/components/GroupGlobeScene.vue`
-- `src/components/GroupRightOverview.vue`
-- `src/data/group.ts`
-- `src/data/globeBoundaries.ts`
-- `src/services/globeGeoJson.ts`
-- `src/stores/group.ts`
-- `public/assets/earth/`
-- `public/assets/geo/`
-- `需求说明/集团三维地球与园区下钻开发规划.md`
-
-仍有一组最初属于用户的未提交素材移动：
+当前工作区只保留一组最初属于用户的未提交素材移动：
 
 - 根目录 `主体素材清洁版.png` 显示为删除。
 - `public/主体素材清洁版.png` 显示为未跟踪。
@@ -529,7 +503,7 @@ git switch -c recovery/baseline-edgeone-2026-07-30 baseline-edgeone-2026-07-30
 
 ### 11.6 当前验证与已知事项
 
-截至 2026-07-31，当前未提交增量最后一次验证通过：
+截至 2026-07-31，当前开发分支版本最后一次验证通过：
 
 ```powershell
 .\node_modules\.bin\vue-tsc.cmd --noEmit -p tsconfig.app.json
@@ -541,13 +515,13 @@ git diff --check
 - Vite 仍提示主 JavaScript chunk 超过 1200 kB，这是现有非阻断警告。
 - 用户已经人工预览并确认地球模型部分整体问题不大，后续只需渐进优化。
 - 当前最新字体、4K 纹理和标签避让改动已完成静态检查与生产构建；由于服务由用户手动管理，交接前没有自行启动浏览器服务。
-- 当前所有集团地球代码、资源和规划仍未提交。不要把“构建通过”误解为已经形成 Git 提交或已经推送远端。
+- 集团地球代码、资源和规划已经进入提交 `5770c37` 并推送至 `origin/codex/next-development`；`main` 和稳定基线标签仍保持在 `4bb1937`。
 
 ## 12. 集团层对外展示 UI 重构
 
 用户已确认集团主页直接定位为“全球制造基地”页面，兼顾客户对外展示与未来全球园区数据打通规划，不再保留“集团总览 / 全球基地 / 经营态势 / 更多模块”等集团层顶部栏目。
 
-截至 2026-07-31，当前未提交增量已经完成第一版结构重构：
+截至 2026-07-31，当前开发分支已经完成第一版结构重构：
 
 1. 顶部只保留 CHINT 品牌、页面标题、日期时间、全球园区数据互联状态和全屏按钮。
 2. 移除原集团六指标横条，不再在主页展示实时告警、设备在线率、能耗负荷、园区运营评分和内部协同任务。

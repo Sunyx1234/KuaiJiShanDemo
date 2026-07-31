@@ -8,6 +8,7 @@
 | `earth-night-4096.jpg` | `examples/textures/planets/earth_night_4096.jpg` | 默认 4K 夜间城市灯光 |
 | `earth-day-2048.jpg` | `examples/textures/planets/earth_atmos_2048.jpg` | 低规格设备日间地表兜底 |
 | `earth-night-2048.png` | `examples/textures/planets/earth_lights_2048.png` | 低规格设备夜间灯光兜底 |
+| `earth-clouds-1024.png` | `examples/textures/planets/earth_clouds_1024.png` | 单层低透明度动态云层 |
 
 - 上游版本：Three.js `r185`
 - 上游目录：<https://github.com/mrdoob/three.js/tree/r185/examples/textures/planets>

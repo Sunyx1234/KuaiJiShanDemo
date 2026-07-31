@@ -6,6 +6,7 @@ export const groupNetworkSummary = [
   { label: '已接入园区', value: '1', unit: '个' },
 ]
 
+// 净利润率、客户满意度、净资产收益率及创新成果为方案演示值，正式交付前需由客户确认替换。
 export const groupPerformanceOverview = {
   hero: {
     period: '2026 Q1',
@@ -15,11 +16,10 @@ export const groupPerformanceOverview = {
     badge: '增长动能增强',
   },
   indicators: [
-    { period: '2025 年度', label: '归母净利润同比', value: '+16.2', unit: '%' },
-    { period: '2025 年度', label: '亚太通用市场增长', value: '+13.0', unit: '%' },
-    { period: '2025 年度', label: '研发投入同比', value: '+4.63', unit: '%' },
+    { period: '2025 年度', label: '净利润率', value: '8.7', unit: '%' },
+    { period: '2025 年度', label: '全球客户满意度', value: '92.6', unit: '分' },
+    { period: '2025 年度', label: '净资产收益率', value: '15.6', unit: '%' },
   ],
-  note: '正泰电器公开披露口径，仅展示增幅与市场增势，不展示经营金额。',
 }
 
 export const groupConnectivitySummary = [
@@ -56,6 +56,20 @@ export const groupShowcaseTopics = [
       { label: '示范成果', value: '9', unit: '项' },
     ],
     description: '围绕数字工厂、智能产线与全球最佳实践，推动制造能力跨园区复制与协同。',
+  },
+  {
+    key: 'innovation',
+    shortLabel: '创新',
+    badge: '创',
+    title: '全球创新投入',
+    heroValue: '5.2',
+    heroUnit: '%',
+    heroLabel: '研发投入占营收比',
+    items: [
+      { label: '年度专利申请', value: '1,286', unit: '件' },
+      { label: '新品上市周期缩短', value: '18', unit: '%' },
+    ],
+    description: '持续加码核心技术与全球研发协同，加快创新成果从实验室走向产品与规模化应用。',
   },
 ]
 

@@ -29,7 +29,6 @@ function selectShowcase(index: number) {
           <span>BUSINESS GROWTH</span>
           <h2>经营业绩增长</h2>
         </div>
-        <small>公开披露 · 不展示金额</small>
       </header>
       <div class="group-performance-lead">
         <div>
@@ -49,14 +48,13 @@ function selectShowcase(index: number) {
           <span>{{ indicator.label }}</span>
         </article>
       </div>
-      <p class="group-performance-note"><i />{{ store.performanceOverview.note }}</p>
     </section>
 
     <section class="group-showcase-panel group-achievement-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>SUSTAINABILITY &amp; INTELLIGENCE</span>
-          <h2>绿色与智能制造成果</h2>
+          <span>GREEN · SMART · INNOVATION</span>
+          <h2>绿色·智造·创新</h2>
         </div>
         <div class="group-showcase-tabs" aria-label="成果主题切换">
           <button v-for="(topic, index) in store.showcaseTopics" :key="topic.key"

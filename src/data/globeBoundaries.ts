@@ -10,7 +10,7 @@ const naturalEarthChinaPovPreview: GlobeBoundarySource = {
   developmentOnly: true,
   color: 0x39aee8,
   opacity: 0.54,
-  radius: 1.522,
+  radius: 1.505,
 }
 
 /**

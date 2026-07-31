@@ -55,6 +55,7 @@ let camera: THREE.PerspectiveCamera | null = null
 let renderer: THREE.WebGLRenderer | null = null
 let controls: OrbitControls | null = null
 let earthGroup: THREE.Group | null = null
+let cloudLayer: THREE.Mesh | null = null
 let resizeObserver: ResizeObserver | null = null
 let boundaryAbortController: AbortController | null = null
 let parkTransition: ParkTransition | null = null
@@ -66,7 +67,7 @@ const networkFlowTime = { value: 0 }
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)')
 const surfaceNormal = new THREE.Vector3(0, 0, 1)
 const labelWidth = 108
-const labelHeight = 36
+const labelHeight = 26
 const tooltipWidth = 408
 const tooltipEstimatedHeight = 330
 const labelViewportPadding = 10
@@ -104,33 +105,61 @@ function createStars() {
   return new THREE.Points(geometry, material)
 }
 
-function createAtmosphere(radius: number) {
-  const geometry = new THREE.SphereGeometry(radius, 64, 48)
+function createAtmosphereLayer(
+  radius: number,
+  color: number,
+  strength: number,
+  riseEnd: number,
+  fadeStart: number,
+) {
+  const geometry = new THREE.SphereGeometry(radius, 96, 64)
   const material = new THREE.ShaderMaterial({
     transparent: true,
-    side: THREE.BackSide,
+    side: THREE.FrontSide,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     uniforms: {
-      glowColor: { value: new THREE.Color(0x1d9cff) },
+      glowColor: { value: new THREE.Color(color) },
+      glowStrength: { value: strength },
+      riseEnd: { value: riseEnd },
+      fadeStart: { value: fadeStart },
     },
     vertexShader: `
       varying vec3 vNormal;
+      varying vec3 vViewDirection;
       void main() {
+        vec4 viewPosition = modelViewMatrix * vec4(position, 1.0);
         vNormal = normalize(normalMatrix * normal);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vViewDirection = normalize(-viewPosition.xyz);
+        gl_Position = projectionMatrix * viewPosition;
       }
     `,
     fragmentShader: `
       uniform vec3 glowColor;
+      uniform float glowStrength;
+      uniform float riseEnd;
+      uniform float fadeStart;
       varying vec3 vNormal;
+      varying vec3 vViewDirection;
       void main() {
-        float intensity = pow(0.82 - dot(vNormal, vec3(0.0, 0.0, 1.0)), 3.2);
-        gl_FragColor = vec4(glowColor, intensity * 0.68);
+        float fresnel = 1.0 - clamp(dot(vNormal, vViewDirection), 0.0, 1.0);
+        float softRise = smoothstep(0.12, riseEnd, fresnel);
+        float softFade = 1.0 - smoothstep(fadeStart, 1.0, fresnel);
+        vec3 lightDirection = normalize(vec3(-0.75, 0.5, 0.45));
+        float sunFacing = smoothstep(-0.45, 0.65, dot(vNormal, lightDirection));
+        float lightBalance = mix(0.28, 1.0, sunFacing);
+        float alpha = softRise * softFade * glowStrength * lightBalance;
+        gl_FragColor = vec4(glowColor, alpha);
       }
     `,
   })
-  return new THREE.Mesh(geometry, material)
+  const layer = new THREE.Mesh(geometry, material)
+  layer.renderOrder = 1
+  return layer
+}
+
+function createAtmosphere() {
+  return createAtmosphereLayer(1.545, 0x55caff, 0.46, 0.62, 0.84)
 }
 
 function createSurfaceRing(
@@ -259,6 +288,28 @@ function createEarthSurfaceMaterial() {
   })
 }
 
+function createCloudLayer() {
+  const cloudTexture = loadEarthTexture('/assets/earth/earth-clouds-1024.png')
+  const layer = new THREE.Mesh(
+    new THREE.SphereGeometry(1.513, 96, 64),
+    new THREE.MeshPhongMaterial({
+      map: cloudTexture,
+      color: 0xe8f7ff,
+      specular: 0x000000,
+      shininess: 0,
+      transparent: true,
+      opacity: 0.4,
+      depthTest: true,
+      depthWrite: false,
+      blending: THREE.NormalBlending,
+    }),
+  )
+  layer.name = 'earth-clouds'
+  layer.renderOrder = -1
+  cloudLayer = layer
+  return layer
+}
+
 function createEarth() {
   const group = new THREE.Group()
   group.rotation.y = THREE.MathUtils.degToRad(-120)
@@ -268,20 +319,9 @@ function createEarth() {
     createEarthSurfaceMaterial(),
   )
   group.add(sphere)
+  group.add(createCloudLayer())
 
-  const grid = new THREE.Mesh(
-    new THREE.SphereGeometry(1.506, 48, 24),
-    new THREE.MeshBasicMaterial({
-      color: 0x238ccf,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.055,
-      depthWrite: false,
-    }),
-  )
-  group.add(grid)
-
-  group.add(createAtmosphere(1.63))
+  group.add(createAtmosphere())
 
   const markerGeometry = new THREE.SphereGeometry(0.01, 16, 10)
   store.parks.forEach((park) => {
@@ -488,6 +528,11 @@ function updateNetworkAnimation(elapsedSeconds: number) {
   })
 }
 
+function updateCloudAnimation(elapsedSeconds: number) {
+  if (!cloudLayer || reducedMotion.matches) return
+  cloudLayer.rotation.y = elapsedSeconds * 0.0035
+}
+
 function easeInOutCubic(value: number) {
   return value < 0.5 ? 4 * value * value * value : 1 - Math.pow(-2 * value + 2, 3) / 2
 }
@@ -569,6 +614,7 @@ function disposeScene() {
   parkMarkers.clear()
   parkPulseRings.clear()
   networkFlowTime.value = 0
+  cloudLayer = null
   scene = null
   camera = null
   renderer = null
@@ -594,12 +640,12 @@ function initializeScene() {
     renderer.domElement.className = 'group-globe__canvas'
     canvasHost.value.appendChild(renderer.domElement)
 
-    scene.add(new THREE.AmbientLight(0x8ccfff, 0.26))
-    const keyLight = new THREE.DirectionalLight(0xe5f5ff, 2.15)
-    keyLight.position.set(4, 1.6, 1.8)
+    scene.add(new THREE.AmbientLight(0x8ccfff, 0.22))
+    const keyLight = new THREE.DirectionalLight(0xe5f5ff, 2.25)
+    keyLight.position.set(-4.2, 2.4, 2.8)
     scene.add(keyLight)
-    const rimLight = new THREE.DirectionalLight(0x176bd3, 0.46)
-    rimLight.position.set(-4, -1, -3)
+    const rimLight = new THREE.DirectionalLight(0x176bd3, 0.3)
+    rimLight.position.set(3.5, -1.2, -3)
     scene.add(rimLight)
     scene.add(createStars())
 
@@ -629,7 +675,9 @@ function initializeScene() {
         controls.autoRotate = !reducedMotion.matches && !store.hoveredParkId
         controls.update()
       }
-      updateNetworkAnimation(animationClock.getElapsedTime())
+      const elapsedSeconds = animationClock.getElapsedTime()
+      updateCloudAnimation(elapsedSeconds)
+      updateNetworkAnimation(elapsedSeconds)
       updatePinPositions()
       renderer.render(scene, camera)
     })
@@ -731,7 +779,6 @@ onBeforeUnmount(disposeScene)
     <div class="group-globe__title">
       <span>GLOBAL MANUFACTURING NETWORK</span>
       <strong>全球制造基地互联网络</strong>
-      <small>拖拽旋转 · 滚轮缩放 · 悬停查看基地信息</small>
     </div>
     <div class="group-globe__status">
       <span><i class="connected" />全球园区网络联动中</span>
@@ -761,7 +808,6 @@ onBeforeUnmount(disposeScene)
         <i><u /></i>
         <span>
           <b>{{ park.shortName }}</b>
-          <small>{{ park.city }}</small>
         </span>
       </button>
 

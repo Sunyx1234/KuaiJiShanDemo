@@ -1,10 +1,15 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useGroupStore } from '../stores/group'
 import type { ParkConfig } from '../data/types'
 
 const store = useGroupStore()
 const router = useRouter()
+const directoryParks = computed(() => [
+  ...store.parks.filter(park => park.id === 'jiaxing'),
+  ...store.parks.filter(park => park.id !== 'jiaxing'),
+])
 
 function openPark(park: ParkConfig) {
   store.requestParkFocus(park.id)
@@ -38,7 +43,7 @@ function openPark(park: ParkConfig) {
       </div>
 
       <nav class="group-park-directory" aria-label="全球制造基地列表">
-        <button v-for="(park, index) in store.parks" :key="park.id"
+        <button v-for="(park, index) in directoryParks" :key="park.id"
           :class="{ selected: store.selectedParkId === park.id, connected: park.status === 'connected' }"
           :aria-label="park.status === 'connected' ? `进入${park.name}` : `在地球上查看${park.name}`"
           @mouseenter="store.setHoveredPark(park.id)" @mouseleave="store.setHoveredPark(null)"

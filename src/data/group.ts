@@ -6,21 +6,53 @@ export const groupNetworkSummary = [
   { label: '已接入园区', value: '1', unit: '个' },
 ]
 
-// 净利润率、客户满意度、净资产收益率及创新成果为方案演示值，正式交付前需由客户确认替换。
-export const groupPerformanceOverview = {
-  hero: {
-    period: '2026 Q1',
-    label: '营业收入同比增长',
-    value: '+46.3',
-    unit: '%',
-    badge: '增长动能增强',
+// 经营指标及创新成果均为方案演示值，正式交付前需由客户确认口径与数值。
+export const groupPerformanceTopics = [
+  {
+    key: 'financial',
+    shortLabel: '财务',
+    title: '财务维度',
+    description: '企业经营成果与财务健康的核心体检表。',
+    hero: {
+      period: '2026 Q1',
+      category: '盈利能力',
+      label: '营业收入',
+      value: '842.6',
+      unit: '亿元',
+      badge: '财务健康稳健',
+    },
+    indicators: [
+      { category: '盈利能力', label: '利润总额', value: '78.4', unit: '亿元' },
+      { category: '盈利能力', label: '净利润', value: '61.7', unit: '亿元' },
+      { category: '盈利能力', label: '净资产收益率', value: '15.6', unit: '%' },
+      { category: '资产与负债', label: '资产负债率', value: '54.8', unit: '%' },
+      { category: '现金流与资金', label: '资金集中度', value: '91.8', unit: '%' },
+      { category: '成本与效率', label: '综合成本下降', value: '6.3', unit: '%' },
+    ],
   },
-  indicators: [
-    { period: '2025 年度', label: '净利润率', value: '8.7', unit: '%' },
-    { period: '2025 年度', label: '全球客户满意度', value: '92.6', unit: '分' },
-    { period: '2025 年度', label: '净资产收益率', value: '15.6', unit: '%' },
-  ],
-}
+  {
+    key: 'operations',
+    shortLabel: '运营',
+    title: '运营维度',
+    description: '核心业务流程执行效率与市场表现的动态仪表盘。',
+    hero: {
+      period: '2026 Q1',
+      category: '生产与供应链',
+      label: '工业总产值',
+      value: '768.4',
+      unit: '亿元',
+      badge: '运营节奏稳定',
+    },
+    indicators: [
+      { category: '生产与供应链', label: '产量计划达成率', value: '98.2', unit: '%' },
+      { category: '生产与供应链', label: '生产进度达成率', value: '97.8', unit: '%' },
+      { category: '生产与供应链', label: '库存周转率', value: '7.2', unit: '次' },
+      { category: '销售与市场', label: '销售目标达成率', value: '96.4', unit: '%' },
+      { category: '销售与市场', label: '客户满意度', value: '92.6', unit: '分' },
+      { category: '人力资源', label: '全员工效提升', value: '11.8', unit: '%' },
+    ],
+  },
+]
 
 export const groupConnectivitySummary = [
   { label: '接入覆盖率', value: '72', unit: '%' },

@@ -3,18 +3,31 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useGroupStore } from '../stores/group'
 
 const store = useGroupStore()
+const performanceIndex = ref(0)
 const showcaseIndex = ref(0)
+let performanceTimer = 0
 let showcaseTimer = 0
 
+const activePerformance = computed(() => store.performanceTopics[performanceIndex.value])
 const activeShowcase = computed(() => store.showcaseTopics[showcaseIndex.value])
 
 onMounted(() => {
+  performanceTimer = window.setInterval(() => {
+    performanceIndex.value = (performanceIndex.value + 1) % store.performanceTopics.length
+  }, 7000)
   showcaseTimer = window.setInterval(() => {
     showcaseIndex.value = (showcaseIndex.value + 1) % store.showcaseTopics.length
   }, 6000)
 })
 
-onBeforeUnmount(() => window.clearInterval(showcaseTimer))
+onBeforeUnmount(() => {
+  window.clearInterval(performanceTimer)
+  window.clearInterval(showcaseTimer)
+})
+
+function selectPerformance(index: number) {
+  performanceIndex.value = index
+}
 
 function selectShowcase(index: number) {
   showcaseIndex.value = index
@@ -26,28 +39,37 @@ function selectShowcase(index: number) {
     <section class="group-showcase-panel group-performance-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>BUSINESS GROWTH</span>
-          <h2>经营业绩增长</h2>
+          <span>BUSINESS INDICATORS</span>
+          <h2>经营指标</h2>
+        </div>
+        <div class="group-showcase-tabs" aria-label="经营指标维度切换">
+          <button v-for="(topic, index) in store.performanceTopics" :key="topic.key"
+            :class="{ active: performanceIndex === index }"
+            :aria-label="`查看${topic.title}`" @click="selectPerformance(index)">
+            {{ topic.shortLabel }}
+          </button>
         </div>
       </header>
-      <div class="group-performance-lead">
-        <div>
-          <span>{{ store.performanceOverview.hero.period }}</span>
-          <strong>{{ store.performanceOverview.hero.value }}<small>{{ store.performanceOverview.hero.unit }}</small></strong>
-          <p>{{ store.performanceOverview.hero.label }}</p>
+      <Transition name="group-showcase-fade" mode="out-in">
+        <div :key="activePerformance.key" class="group-performance-content">
+          <div class="group-performance-lead">
+            <div>
+              <span>{{ activePerformance.hero.period }} · {{ activePerformance.hero.category }}</span>
+              <strong>{{ activePerformance.hero.value }}<small>{{ activePerformance.hero.unit }}</small></strong>
+              <p>{{ activePerformance.hero.label }}</p>
+            </div>
+            <em><i />{{ activePerformance.hero.badge }}</em>
+          </div>
+          <div class="group-performance-indicators">
+            <article v-for="indicator in activePerformance.indicators" :key="indicator.label">
+              <header><small>{{ indicator.category }}</small></header>
+              <strong>{{ indicator.value }}<small>{{ indicator.unit }}</small></strong>
+              <span>{{ indicator.label }}</span>
+            </article>
+          </div>
+          <p class="group-performance-description">{{ activePerformance.description }}</p>
         </div>
-        <em><i />{{ store.performanceOverview.hero.badge }}</em>
-      </div>
-      <div class="group-performance-indicators">
-        <article v-for="indicator in store.performanceOverview.indicators" :key="indicator.label">
-          <header>
-            <small>{{ indicator.period }}</small>
-            <i>↗</i>
-          </header>
-          <strong>{{ indicator.value }}<small>{{ indicator.unit }}</small></strong>
-          <span>{{ indicator.label }}</span>
-        </article>
-      </div>
+      </Transition>
     </section>
 
     <section class="group-showcase-panel group-achievement-panel">

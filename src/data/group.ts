@@ -1,9 +1,11 @@
 import type { ParkConfig } from './types'
 
 export const groupNetworkSummary = [
-  { label: '全球制造基地', value: '13', unit: '个' },
-  { label: '覆盖国家和地区', value: '8', unit: '个' },
-  { label: '已接入园区', value: '1', unit: '个' },
+  // 正泰国际官网 2026 年公开口径：30+ 制造基地、覆盖 140+ 国家和地区、4 个全球研发中心。
+  // 本次地球收录 13 个重点基地、接入 1 个园区，单独在基地索引标题中标注。
+  { label: '全球制造基地', value: '30+', unit: '座' },
+  { label: '覆盖国家和地区', value: '140+', unit: '个' },
+  { label: '全球研发中心', value: '4', unit: '个' },
 ]
 
 // 经营指标及创新成果均为方案演示值，正式交付前需由客户确认口径与数值。

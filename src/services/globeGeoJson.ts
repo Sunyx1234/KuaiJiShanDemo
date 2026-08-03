@@ -27,6 +27,7 @@ export interface GlobeBoundarySource {
   reviewNumber?: string
   authorizedForProduction: boolean
   developmentOnly?: boolean
+  demoOnly?: boolean
   color: number
   opacity: number
   radius?: number
@@ -67,8 +68,8 @@ function positionLines(geometry: GeoJsonGeometry | null): Position[][] {
 }
 
 function validateSource(source: GlobeBoundarySource) {
-  if (!source.authorizedForProduction && !source.developmentOnly) {
-    throw new Error(`地图边界 ${source.id} 未标记为可用于生产环境`)
+  if (!source.authorizedForProduction && !source.developmentOnly && !source.demoOnly) {
+    throw new Error(`地图边界 ${source.id} 未标记为可用于生产环境或演示环境`)
   }
   if ((source.scope === 'china' || source.scope === 'province') && !source.reviewNumber) {
     throw new Error(`地图边界 ${source.id} 缺少审图号`)

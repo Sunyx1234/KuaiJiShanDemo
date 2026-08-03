@@ -28,7 +28,7 @@ function openPark(park: ParkConfig) {
         <i />
       </header>
 
-      <p class="group-network-intro">连接全球制造能力，以本地化生产与协同创新服务区域市场。</p>
+      <p class="group-network-intro">连接全球制造能力，以本地化生产与协同创新服务全球客户。</p>
 
       <div class="group-network-stats">
         <article v-for="item in store.networkSummary" :key="item.label">
@@ -39,7 +39,7 @@ function openPark(park: ParkConfig) {
 
       <div class="group-directory-heading">
         <span>制造基地索引</span>
-        <small>中国 6 · 海外 7</small>
+        <small>重点展示 {{ store.parks.length }} · 已接入 {{ store.connectedParks.length }}</small>
       </div>
 
       <nav class="group-park-directory" aria-label="全球制造基地列表">

@@ -93,6 +93,11 @@ onBeforeUnmount(stopParkServices)
         <GroupRightOverview />
       </div>
 
+      <div v-if="isGroupLevel" class="group-powered-by" aria-label="技术支持：中国移动">
+        <span>POWERED BY</span>
+        <strong>中国移动</strong>
+      </div>
+
       <div v-else :key="`park-${activePark?.id ?? 'unknown'}-${store.activeNav}`"
         class="dashboard-grid" :class="{ 'security-mode': store.activeNav === 'security' }">
         <SecurityLeft v-if="store.activeNav === 'security'" />

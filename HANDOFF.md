@@ -536,6 +536,7 @@ git diff --check
 8. 园区列表与地球继续联动；嘉兴可以进入园区页面，其他园区聚焦查看并提示场景建设中。
 9. 集团前端数据源中已经移除不再使用的集团告警、设备在线率、园区运营评分等内部模拟数据。
 10. 左右展示面板改为半透明悬浮层，文字与交互保持清晰，同时允许透视其后的地球和园区链路。
+11. 集团页右下角增加低对比度的“POWERED BY 中国移动”技术署名，无独立卡片和品牌大图，仅在集团页面展示，不影响嘉兴园区页面。
 
 全球制造网络数据参考正泰国际官网 About CHINT 页面及 2025-07-21 官方全球制造专题（<https://www.chintglobal.com/global/en/about-us/about-chint.html>、<https://www.chintglobal.com/gb/en/about-us/news-center/news/did-you-know--chint-global-manufacturing.html>）。官网不同页面曾出现“28 个现有基地 + 3 个规划工厂”和“30+ 智慧工厂/制造基地”等不同统计口径，当前大屏采用最新对外叙事的 `30+`，避免给出可能快速变化的精确值。
 

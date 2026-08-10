@@ -5,7 +5,8 @@ import WorkOrderMobileView from '../views/WorkOrderMobileView.vue'
 export default createRouter({
   history: createWebHashHistory(),
   routes: [
-    { path: '/', name: 'dashboard', component: DashboardView },
+    { path: '/', name: 'group-dashboard', component: DashboardView },
+    { path: '/park/:parkId', name: 'park-dashboard', component: DashboardView },
     { path: '/work-order', name: 'work-order-mobile', component: WorkOrderMobileView },
     { path: '/:section', name: 'section', component: DashboardView },
   ],

@@ -17,11 +17,13 @@
     "element-plus": "^2.9.11",
     "pinia": "^3.0.3",
     "proxy-agent": "^5.0.0",
+    "three": "^0.185.1",
     "vue": "^3.5.17",
     "vue-echarts": "^7.0.3",
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@types/three": "^0.185.1",
     "@vitejs/plugin-vue": "^6.0.0",
     "typescript": "~5.8.3",
     "vite": "^7.0.4",

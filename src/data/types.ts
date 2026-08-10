@@ -12,6 +12,8 @@ export type VisitorStatus = '正常' | '即将超时' | '超时滞留' | '限制
 export type VisitorScope = '全部访客' | '当前在厂' | '今日入厂' | '今日已离厂' | '异常访客'
 export type VisitorTrackRange = '30m' | '1h' | '2h' | 'all'
 export type VisitorExceptionStatus = '待确认' | '处理中' | '已处理'
+export type ParkConnectionStatus = 'connected' | 'building' | 'planned'
+export type ParkSceneType = 'image' | 'gltf'
 
 export interface Metric {
   label: string
@@ -20,6 +22,40 @@ export interface Metric {
   delta: string
   positive: boolean
   icon: string
+}
+
+export interface ParkConfig {
+  id: string
+  name: string
+  shortName: string
+  city: string
+  longitude: number
+  latitude: number
+  status: ParkConnectionStatus
+  sceneType: ParkSceneType
+  sceneAsset?: string
+  summary: string
+  products: string
+  positioning: string
+  pinOffset: { x: number; y: number }
+}
+
+export interface GroupAlert {
+  id: string
+  parkId: string
+  level: '一般' | '关注' | '严重'
+  content: string
+  time: string
+  status: '待确认' | '处理中' | '已闭环'
+}
+
+export interface GroupActivity {
+  id: string
+  parkId: string
+  title: string
+  detail: string
+  time: string
+  tone: StatusTone
 }
 
 export interface SceneMarker {

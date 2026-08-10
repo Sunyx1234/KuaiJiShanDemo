@@ -1,10 +1,20 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { FullScreen, MostlyCloudy } from '@element-plus/icons-vue'
 import { navItems } from '../data/mock'
 import type { NavKey } from '../data/types'
 import { useDashboardStore } from '../stores/dashboard'
 
+withDefaults(defineProps<{
+  title?: string
+  showGroupReturn?: boolean
+}>(), {
+  title: '正泰集团厂区综合态势运营中心',
+  showGroupReturn: false,
+})
+
+const router = useRouter()
 const store = useDashboardStore()
 const now = ref(new Date())
 let timer = 0
@@ -16,7 +26,7 @@ async function toggleFullscreen() {
   else await document.exitFullscreen()
 }
 function switchNav(key: NavKey | 'more', disabled = false) {
-  if (!disabled && key !== 'more') store.activeNav = key
+  if (!disabled && key !== 'more') store.switchNavigation(key)
 }
 </script>
 
@@ -30,7 +40,7 @@ function switchNav(key: NavKey | 'more', disabled = false) {
       <button v-for="item in navItems.slice(0, 2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
     </nav>
     <div class="title-block">
-      <h1>正泰集团厂区综合态势运营中心</h1>
+      <h1>{{ title }}</h1>
       <p>CHINT GROUP FACTORY OPERATIONS CENTER</p>
     </div>
     <nav class="nav nav--right">
@@ -41,5 +51,8 @@ function switchNav(key: NavKey | 'more', disabled = false) {
       <span><el-icon><MostlyCloudy /></el-icon> 28°C　晴　东南风2级</span>
       <button aria-label="切换全屏" @click="toggleFullscreen"><el-icon><FullScreen /></el-icon></button>
     </div>
+    <button v-if="showGroupReturn" class="group-return-button" @click="router.push('/')">
+      <span>←</span> 返回集团地球
+    </button>
   </header>
 </template>

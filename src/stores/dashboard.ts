@@ -130,13 +130,29 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   function applyWorkOrder(order: WorkOrder) {
-    const index = workOrders.value.findIndex(item => item.id === order.id)
-    if (index >= 0) workOrders.value[index] = order
-    else workOrders.value.unshift(order)
-    const alert = aiAlertItems.value.find(item => item.id === order.alertId)
+    const normalizedOrder = normalizeWorkOrder(order)
+    const index = workOrders.value.findIndex(item => item.id === normalizedOrder.id)
+    if (index >= 0) workOrders.value[index] = normalizedOrder
+    else workOrders.value.unshift(normalizedOrder)
+    const alert = aiAlertItems.value.find(item => item.id === normalizedOrder.alertId)
     if (alert) {
-      alert.status = order.status
-      alert.assignee = order.assignee
+      alert.status = normalizedOrder.status
+      alert.assignee = normalizedOrder.assignee
+    }
+  }
+
+  function normalizeWorkOrder(order: WorkOrder): WorkOrder {
+    return {
+      ...order,
+      assignee: typeof order.assignee === 'string' && order.assignee.trim()
+        ? order.assignee
+        : '现场责任人',
+      department: typeof order.department === 'string' && order.department.trim()
+        ? order.department
+        : '安全生产部',
+      photos: Array.isArray(order.photos) ? order.photos : [],
+      notifications: Array.isArray(order.notifications) ? order.notifications : [],
+      timeline: Array.isArray(order.timeline) ? order.timeline : [],
     }
   }
 
@@ -153,8 +169,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
   async function loadWorkOrders() {
     const [ordersResult, configResult] = await Promise.allSettled([fetchWorkOrders(), fetchWorkOrderConfig()])
     if (ordersResult.status === 'fulfilled') {
-      workOrders.value = ordersResult.value
-      ordersResult.value.forEach(order => {
+      const normalizedOrders = ordersResult.value.map(normalizeWorkOrder)
+      workOrders.value = normalizedOrders
+      normalizedOrders.forEach(order => {
         const alert = aiAlertItems.value.find(item => item.id === order.alertId)
         if (alert) {
           alert.status = order.status
@@ -196,8 +213,32 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return result
   }
 
+  function switchNavigation(nav: NavKey) {
+    if (activeNav.value === nav) return
+    activeNav.value = nav
+    selectedMarker.value = null
+    selectedAlert.value = null
+
+    if (nav !== 'security') {
+      expandedCameraArea.value = null
+      selectedCamera.value = null
+      selectedAiAlert.value = null
+      requestedVideoTime.value = 0
+    }
+
+    if (nav !== 'people') {
+      expandedVisitorArea.value = null
+      selectedVisitor.value = null
+      selectedVisitorException.value = null
+      visitorTrackPlaying.value = false
+      visitorTrackProgress.value = 100
+    }
+
+    if (nav === 'overview') activeLayer.value = 'overview'
+  }
+
   function enterVisitorManagement() {
-    activeNav.value = 'people'
+    switchNavigation('people')
     visitorScope.value = '当前在厂'
     visitorStatus.value = '全部状态'
     visitorAreaFilter.value = '全部区域'
@@ -234,6 +275,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
     visitorExceptionStatus, visitorTrackRange, visitorTrackPlaying, visitorTrackProgress, visitorPlaybackSpeed,
     metrics, visibleMarkers, filteredAlerts, filteredAiAlerts, filteredVisitors, filteredVisitorExceptions, activeVisitorTrack, visitorTrackCursor,
     locateAlert, openCamera, locateAiAlert, closeCamera, closeAiAlert, processAiAlert, loadWorkOrders, loadWorkOrderConfig, dispatchSelectedAiAlert, reviewSelectedWorkOrder, retrySelectedWorkOrderNotification,
-    enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
+    switchNavigation, enterVisitorManagement, selectVisitor, locateVisitorException, exitVisitorTrack,
   }
 })

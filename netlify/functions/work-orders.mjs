@@ -11,8 +11,8 @@ export function configureWorkOrderStorage(adapter) {
   readPhoto = adapter.readPhoto
 }
 
-const orderStore = () => getStore({ name: 'chint-work-orders', consistency: 'strong' })
-const photoStore = () => getStore({ name: 'chint-work-order-photos', consistency: 'strong' })
+const orderStore = () => getStore({ name: 'huijishan-work-orders', consistency: 'strong' })
+const photoStore = () => getStore({ name: 'huijishan-work-order-photos', consistency: 'strong' })
 const ORDER_PREFIX = 'order:'
 const PHOTO_LIMIT = 3
 const PHOTO_SIZE_LIMIT = 5 * 1024 * 1024
@@ -76,7 +76,7 @@ async function findByToken(token) {
 
 function requireAdminPin(pin) {
   const expected = process.env.WORK_ORDER_ADMIN_PIN
-  if (!expected) throw Object.assign(new Error('Netlify 尚未配置工单管理口令'), { status: 503 })
+  if (!expected) throw Object.assign(new Error('尚未配置工单管理口令'), { status: 503 })
   if (!pin || pin !== expected) throw Object.assign(new Error('管理口令不正确'), { status: 401 })
 }
 

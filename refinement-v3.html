@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>会稽山园区 · v3 环境细化</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,sans-serif;color:#263937;background:#c0cdcf}canvas{display:block;width:100vw;height:100vh;touch-action:none}
+    header{position:absolute;top:26px;left:30px;pointer-events:none}small{font-size:10px;letter-spacing:3px}h1{font-size:25px;font-weight:500;margin:7px 0}header p{font-size:12px;margin:0;color:#48635e}
+    nav{position:absolute;bottom:28px;left:50%;transform:translateX(-50%);display:flex;gap:6px;padding:8px;background:#fffef1e8;border:1px solid #ffffff90;border-radius:14px;box-shadow:0 8px 25px #24392e20;white-space:nowrap}
+    button{font:inherit;font-size:12px;padding:10px 14px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}button:hover{background:#e8eade}button[aria-pressed=true]{background:#d8e3cc;color:#294a2c}button:disabled{opacity:.45;cursor:wait}.sep{border-left:1px solid #cdd3c7;margin:5px}
+    #status{position:absolute;top:28px;right:28px;background:#fffff1e8;border-radius:10px;padding:12px 16px;font-size:12px;line-height:1.7;text-align:right}#hint{position:absolute;bottom:6px;width:100%;text-align:center;font-size:10px;color:#4a625e}
+    @media(max-width:700px){header{top:14px;left:16px}h1{font-size:18px}#status{top:95px;right:14px}nav{bottom:28px;gap:0;padding:4px}button{padding:9px 7px;font-size:11px}}
+  </style>
+</head>
+<body>
+  <header><small>HUIJISHAN · MODEL REVIEW</small><h1>会稽山园区 · 环境细化</h1><p>全园植被、滨河与水面 · 实际 Three.js 渲染</p></header>
+  <div id="status" role="status">正在加载 v3 模型…</div>
+  <nav aria-label="模型对比与视角"><button id="v2" aria-pressed="false">上一轮 v2</button><button id="v3" aria-pressed="true">环境 v3</button><i class="sep"></i><button data-view="sample" aria-pressed="true">主厂房</button><button data-view="facade" aria-pressed="false">立面近景</button><button data-view="overview" aria-pressed="false">全园区</button><button data-view="river" aria-pressed="false">滨河近景</button><button id="tour" aria-pressed="false">缓慢环绕</button></nav>
+  <div id="hint">拖动旋转 · 滚轮缩放 · 右键平移；切换版本保持相同镜头与光照</div>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { Water } from 'three/addons/objects/Water.js';
+    import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+    const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+    renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight);renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.1;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=true;document.body.prepend(renderer.domElement);
+    const scene=new THREE.Scene();scene.background=new THREE.Color('#b5c3c7');
+    const camera=new THREE.PerspectiveCamera(38,innerWidth/innerHeight,.2,2400);
+    const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.07;controls.maxPolarAngle=Math.PI*.48;controls.minDistance=15;controls.maxDistance=1100;controls.autoRotateSpeed=.22;
+    scene.add(new THREE.HemisphereLight(0xdce8f1,0x7b806d,.55));
+    const sun=new THREE.DirectionalLight(0xfff0d8,3.2);sun.position.set(-190,250,120);sun.target.position.set(-95,0,-15);sun.castShadow=true;sun.shadow.mapSize.set(4096,4096);sun.shadow.normalBias=.035;sun.shadow.bias=-.00003;Object.assign(sun.shadow.camera,{left:-300,right:300,top:300,bottom:-300,near:10,far:1000});sun.shadow.camera.updateProjectionMatrix();scene.add(sun,sun.target);
+    const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();const env=pmrem.fromScene(room);scene.environment=env.texture;scene.environmentIntensity=.3;room.dispose();pmrem.dispose();
+    const status=document.querySelector('#status'),cache=new Map(),buttons=[...document.querySelectorAll('nav button')];let transition=null;const waterMaps=new Set(),waterSurfaces=[];let current=null,version='v3',loading=false,loadId=0,frames=0,start=performance.now(),fps=0;
+    const presets={river:{position:[-102,73,173],target:[-22,2,83]},sample:{position:[-275,128,115],target:[-153,6,-42]},facade:{position:[-249,34,36],target:[-164,8,-12]},overview:{position:[-275,360,460],target:[-12,0,-8]}};
+    function view(name){const p=presets[name];transition={position:new THREE.Vector3().fromArray(p.position),target:new THREE.Vector3().fromArray(p.target)};document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.view===name)));}
+    controls.addEventListener('start',()=>transition=null);
+    function prepareVegetation(root){
+      root.updateMatrixWorld(true);const tagged=[];root.traverse(o=>{if(o.userData.vegetation_instance)tagged.push(o)});const groups=new Map();
+      for(const node of tagged){node.traverse(o=>{if(!o.isMesh)return;const key=o.geometry.uuid+'|'+o.material.uuid;let g=groups.get(key);if(!g){g={geometry:o.geometry,material:o.material,matrices:[]};groups.set(key,g);}g.matrices.push(o.matrixWorld.clone());});}
+      for(const node of tagged)node.removeFromParent();
+      for(const g of groups.values()){const o=new THREE.InstancedMesh(g.geometry,g.material,g.matrices.length);g.matrices.forEach((m,i)=>o.setMatrixAt(i,m));o.instanceMatrix.needsUpdate=true;o.computeBoundingSphere();o.name='v3 vegetation instances';o.castShadow=true;o.receiveShadow=true;root.add(o);}
+    }
+    function prepareWater(root){
+      let normal=null;root.traverse(o=>{if(o.isMesh&&o.material?.name?.includes('水道青绿')){normal=o.material.normalMap;o.visible=false;}});if(!normal)return;
+      const shape=new THREE.Shape();shape.moveTo(-230,-96.6);shape.lineTo(209.3,-96.6);shape.lineTo(209.3,119.6);shape.lineTo(193.2,119.6);shape.lineTo(193.2,-78.2);shape.lineTo(-230,-78.2);shape.closePath();
+      const water=new Water(new THREE.ShapeGeometry(shape),{textureWidth:512,textureHeight:512,waterNormals:normal,sunDirection:sun.position.clone().sub(sun.target.position).normalize(),sunColor:0xffefdc,waterColor:0x24544d,distortionScale:.8});
+      water.rotation.x=-Math.PI/2;water.position.y=.165;water.material.uniforms.size.value=3;water.receiveShadow=true;water.name='v3 river reflection';root.add(water);waterSurfaces.push(water);
+    }
+    function refreshStatus(){if(!loading)status.innerHTML=`${version==='v3'?'环境细化 v3':'上一轮 v2'}<br>${Math.round(renderer.info.render.triangles/1000)} 千三角形（含阴影） · ${renderer.info.render.calls} 次绘制<br>本机预览约 ${fps} FPS`;}
+    async function load(v){if(loading)return;version=v;loading=true;const id=++loadId;buttons.forEach(b=>b.disabled=true);status.textContent=`正在加载 ${v} 模型…`;
+      try{let object=cache.get(v);if(!object){const gltf=await new GLTFLoader().loadAsync(`/assets/models/huijishan-campus-${v}.glb`);object=gltf.scene;prepareVegetation(object);object.traverse(o=>{if(!o.isMesh)return;o.castShadow=!o.name.includes('浅灰场地')&&!o.name.includes('水道')&&!o.name.includes('种植土')&&!o.name.includes('道路');o.receiveShadow=true;for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(m.name.includes('水道青绿')&&m.normalMap){m.normalScale.set(.45,.45);m.envMapIntensity=1.3;waterMaps.add(m.normalMap);}for(const value of Object.values(m)){if(value?.isTexture)value.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());}}});prepareWater(object);cache.set(v,object);}
+        if(id!==loadId)return;if(current)scene.remove(current);current=object;scene.add(current);renderer.shadowMap.needsUpdate=true;document.querySelector('#v2').setAttribute('aria-pressed',String(v==='v2'));document.querySelector('#v3').setAttribute('aria-pressed',String(v==='v3'));loading=false;refreshStatus();
+      }catch(e){loading=false;status.textContent=`模型加载失败：${e.message}`;console.error(e);}finally{buttons.forEach(b=>b.disabled=false);}}
+    document.querySelector('#v2').onclick=()=>load('v2');document.querySelector('#v3').onclick=()=>load('v3');document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>view(b.dataset.view));
+    document.querySelector('#tour').onclick=e=>{controls.autoRotate=!controls.autoRotate;e.currentTarget.setAttribute('aria-pressed',String(controls.autoRotate));};
+    document.addEventListener('visibilitychange',()=>{start=performance.now();frames=0;});
+    addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+    const timer=new THREE.Timer();renderer.setAnimationLoop(()=>{if(document.hidden)return;timer.update();const dt=Math.min(timer.getDelta(),.05);if(transition){const t=1-Math.exp(-dt*5);camera.position.lerp(transition.position,t);controls.target.lerp(transition.target,t);if(camera.position.distanceTo(transition.position)<.03)transition=null;}for(const map of waterMaps){map.offset.x+=dt*.007;map.offset.y+=dt*.004;}for(const water of waterSurfaces)water.material.uniforms.time.value+=dt*.15;controls.update(dt);renderer.render(scene,camera);frames++;const now=performance.now();if(now-start>1500){fps=Math.round(frames*1000/(now-start));frames=0;start=now;refreshStatus();}});
+    camera.position.fromArray(presets.overview.position);controls.target.fromArray(presets.overview.target);controls.update();view('overview');load('v3');
+  </script>
+</body>
+</html>

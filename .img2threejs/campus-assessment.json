@@ -1,0 +1,14 @@
+{
+  "subject": "正泰嘉兴园区建筑群",
+  "reference": "codex-clipboard-2ab68c0a-e251-48de-960d-81195e84fe4a.png",
+  "suitability": "out-of-scope-for-single-object-pipeline",
+  "reason": "The supplied photograph depicts an entire campus scene. The img2threejs validation rubric rejects scene photographs as single-object references. Use a custom architectural scene implementation for the user's authorized dashboard task.",
+  "observations": ["Low dark office wings flanking an open elevated entrance frame", "Rectangular factory sheds behind central lawns", "Repeated shallow roof ridges and photovoltaic panels", "Perimeter roads, parking rows, trees and sports courts"],
+  "inferences": ["Building dimensions are relative estimates", "Occluded factory backs use repeated visible facade modules", "Business marker positions are registered from legacy illustrative coordinates"],
+  "qualityContract": {
+    "appearance": "Existing dark navy dashboard, blue-gray roofs, cyan edges, muted teal planting",
+    "identity": ["Two front office wings and open entrance frame", "Rear expansive ribbed factory roofs", "Central landscaped lawns", "Photovoltaic grids", "Perimeter roads, parked cars, courts, and trees"],
+    "interaction": ["Orbit rotation", "Zoom", "Reset", "Top view", "Optional auto rotation", "Projected existing business markers and visitor paths"],
+    "verification": ["Typecheck and production build", "Browser screenshot review at multiple angles", "Controls and existing dashboard interaction smoke checks", "Resource cleanup review"]
+  }
+}

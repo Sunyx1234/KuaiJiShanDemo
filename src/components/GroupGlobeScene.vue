@@ -313,6 +313,7 @@ function createCloudLayer() {
 function createEarth() {
   const group = new THREE.Group()
   group.rotation.y = THREE.MathUtils.degToRad(-120)
+  group.rotation.x = THREE.MathUtils.degToRad(30)
 
   const sphere = new THREE.Mesh(
     new THREE.SphereGeometry(1.5, 96, 64),
@@ -352,14 +353,14 @@ function createEarth() {
     parkPulseRings.set(park.id, pulseRing)
   })
 
-  const hub = parkAnchors.get('jiaxing')
+  const hub = parkAnchors.get('huijishan')
   if (hub) {
     const hubPosition = hub.position.clone()
     group.add(createSurfaceRing(hubPosition, 0.036, 0.04, 0x45d799, 0.3))
     group.add(createSurfaceRing(hubPosition, 0.06, 0.064, 0x2aa9ff, 0.16))
 
     store.parks
-      .filter((park) => park.id !== 'jiaxing')
+      .filter((park) => park.id !== 'huijishan')
       .forEach((park, index) => {
         const target = parkAnchors.get(park.id)
         if (!target) return
@@ -660,7 +661,7 @@ function initializeScene() {
     controls.minDistance = 2.2
     controls.maxDistance = 5.8
     controls.zoomSpeed = 0.82
-    controls.autoRotate = !reducedMotion.matches
+    controls.autoRotate = !reducedMotion.matches && store.parks.length > 1
     controls.autoRotateSpeed = 0.38
 
     resizeObserver = new ResizeObserver(resizeRenderer)
@@ -672,7 +673,7 @@ function initializeScene() {
       if (!renderer || !scene || !camera || !controls) return
       const transitionActive = updateParkTransition(performance.now())
       if (!transitionActive && !transitioningPark.value) {
-        controls.autoRotate = !reducedMotion.matches && !store.hoveredParkId
+        controls.autoRotate = !reducedMotion.matches && store.parks.length > 1 && !store.hoveredParkId
         controls.update()
       }
       const elapsedSeconds = animationClock.getElapsedTime()
@@ -777,18 +778,18 @@ onBeforeUnmount(disposeScene)
 <template>
   <section ref="sceneRoot" class="group-globe-scene" @click.self="store.setHoveredPark(null)">
     <div class="group-globe__title">
-      <span>GLOBAL MANUFACTURING NETWORK</span>
-      <strong>全球制造基地互联网络</strong>
+      <span>HUIJISHAN · SHAOXING</span>
+      <strong>会稽山绍兴园区</strong>
     </div>
     <div class="group-globe__status">
-      <span><i class="connected" />全球园区网络联动中</span>
+      <span><i class="connected" />园区数字场景已接入</span>
     </div>
 
     <div v-if="webglAvailable" ref="canvasHost" class="group-globe__host" />
     <div v-else class="group-globe__fallback">
       <i />
       <strong>当前设备无法启用三维地球</strong>
-      <span>集团数据面板仍可正常使用，也可以通过基地列表进入已接入园区。</span>
+      <span>仍可通过园区列表进入三维场景。</span>
       <div>
         <button v-for="park in store.parks" :key="park.id" :disabled="park.status !== 'connected'"
           @click="openPark(park)">
@@ -816,18 +817,18 @@ onBeforeUnmount(disposeScene)
         @mouseenter="store.setHoveredPark(store.hoveredPark.id)"
         @mouseleave="store.setHoveredPark(null)">
         <header>
-          <span>MANUFACTURING BASE</span>
+          <span>DIGITAL TWIN CAMPUS</span>
           <small>{{ store.hoveredPark.city }}</small>
         </header>
         <h3>{{ store.hoveredPark.name }}</h3>
         <p>{{ store.hoveredPark.summary }}</p>
         <dl>
           <div>
-            <dt>主要产品</dt>
+            <dt>园区场景</dt>
             <dd>{{ store.hoveredPark.products }}</dd>
           </div>
           <div>
-            <dt>基地定位</dt>
+            <dt>园区定位</dt>
             <dd>{{ store.hoveredPark.positioning }}</dd>
           </div>
         </dl>

@@ -1,13 +1,35 @@
 <script setup lang="ts">
 import * as Icons from '@element-plus/icons-vue'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { alerts, layerItems, sceneMarkers, securityCameraAreas, securityCameras, visitorAreas, visitors } from '../data/mock'
 import { useDashboardStore } from '../stores/dashboard'
 import type { LayerKey } from '../data/types'
 import { getSavedAdminPin } from '../services/workOrders'
 import BaseChart from './BaseChart.vue'
 
+const HuijishanCampusScene = defineAsyncComponent(() => import('./HuijishanCampusScene.vue'))
+
 const store = useDashboardStore()
+const route = useRoute()
+const showObjModel = ref(true)
+const supportsObjModel = computed(() => route.name === 'park-dashboard' && route.params.parkId === 'huijishan')
+const isModelMode = computed(() => supportsObjModel.value && showObjModel.value)
+const modelReady = ref(false)
+const projectionVersion = ref(0)
+const objSceneRef = ref<{ projectPoint: (x: number, y: number) => { x: number; y: number } | null } | null>(null)
+function projectedPoint(x: number, y: number) {
+  void projectionVersion.value
+  return isModelMode.value && modelReady.value ? objSceneRef.value?.projectPoint(x, y) ?? { x, y } : { x, y }
+}
+function scenePointStyle(x: number, y: number) {
+  const point = projectedPoint(x, y)
+  return { left: `${point.x}%`, top: `${point.y}%` }
+}
+function switchSceneMode(useModel: boolean) {
+  if (useModel) modelReady.value = false
+  showObjModel.value = useModel
+}
 const iconMap = Icons as Record<string, any>
 const videoRef = ref<HTMLVideoElement | null>(null)
 const videoFrameRef = ref<HTMLElement | null>(null)
@@ -266,24 +288,30 @@ const detailTrend = computed(() => ({
 </script>
 
 <template>
-  <section class="scene" :class="{ 'security-scene': store.activeNav === 'security' }" @click.self="store.expandedCameraArea = null">
+  <section class="scene" :class="{ 'security-scene': store.activeNav === 'security', 'scene-model-mode': isModelMode }" @click.self="store.expandedCameraArea = null">
     <div class="scene__vignette" />
-    <img src="/assets/factory-main.png" alt="正泰集团厂区数字孪生主场景" class="scene__image"
+    <HuijishanCampusScene v-if="isModelMode" ref="objSceneRef" compact
+      @ready="modelReady = true" @view-change="projectionVersion++" />
+    <img v-else src="/assets/huijishan-campus-aerial.jpg" alt="会稽山园区航拍参考图" class="scene__image"
       @click="store.activeNav === 'security' ? (store.expandedCameraArea = null) : store.activeNav === 'people' && !store.selectedVisitor ? (store.expandedVisitorArea = null) : null" />
+    <div v-if="supportsObjModel" class="scene-mode-switch" role="group" aria-label="中央场景切换">
+      <button type="button" :class="{ active: showObjModel }" :aria-pressed="showObjModel" @click="switchSceneMode(true)">园区三维</button>
+      <button type="button" :class="{ active: !showObjModel }" :aria-pressed="!showObjModel" @click="switchSceneMode(false)">园区航拍</button>
+    </div>
 
     <template v-if="store.activeNav === 'security'">
       <div class="security-scan-line" />
       <div class="security-scene-badge"><i />AI VIDEO ANALYTICS <b>全厂监控态势</b></div>
       <template v-for="area in areaSummaries" :key="area.id">
         <button v-if="store.expandedCameraArea !== area.id" class="camera-cluster"
-          :class="{ alarming: area.alerts > 0 }" :style="{ left: `${area.x}%`, top: `${area.y}%` }"
+          :class="{ alarming: area.alerts > 0 }" :style="scenePointStyle(area.x, area.y)"
           @click.stop="store.expandedCameraArea = area.id">
           <i><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon><b>{{ area.cameras.length }}</b></i>
           <span><strong>{{ area.name }}</strong><small>{{ area.cameras.length }} 路在线 · 告警 {{ area.alerts }}</small></span>
         </button>
         <button v-for="camera in area.cameras" v-else :key="camera.id" class="security-camera-marker"
           :class="[`status-${camera.status}`, { selected: store.selectedCamera?.id === camera.id }]"
-          :style="{ left: `${camera.x}%`, top: `${camera.y}%` }" @click.stop="store.openCamera(camera)">
+          :style="scenePointStyle(camera.x, camera.y)" @click.stop="store.openCamera(camera)">
           <span><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon></span>
           <i>{{ camera.name }}</i>
           <div>
@@ -399,7 +427,7 @@ const detailTrend = computed(() => ({
           <div ref="videoFrameRef" class="security-video-frame"
             :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'video' }">
             <video v-if="hasPlayableVideo" ref="videoRef" :src="store.selectedCamera.videoUrl"
-              autoplay muted loop playsinline preload="metadata" :poster="`/assets/factory-main.png`"
+              autoplay muted loop playsinline preload="metadata" :poster="`/assets/huijishan-campus-aerial.jpg`"
               @loadedmetadata="syncRequestedVideoTime" @error="handleVideoError" />
             <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
               :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
@@ -444,24 +472,26 @@ const detailTrend = computed(() => ({
 
       <svg v-if="store.selectedVisitor" class="visitor-track-map" viewBox="0 0 100 100" preserveAspectRatio="none">
         <line v-for="segment in visitorTrackSegments" :key="`${segment.from.id}-${segment.to.id}`"
-          :x1="segment.from.x" :y1="segment.from.y" :x2="segment.to.x" :y2="segment.to.y"
+          :x1="projectedPoint(segment.from.x, segment.from.y).x" :y1="projectedPoint(segment.from.x, segment.from.y).y"
+          :x2="projectedPoint(segment.to.x, segment.to.y).x" :y2="projectedPoint(segment.to.x, segment.to.y).y"
           :class="{ interrupted: segment.interrupted }" />
-        <circle v-for="node in store.activeVisitorTrack" :key="node.id" :cx="node.x" :cy="node.y" r=".55"
+        <circle v-for="node in store.activeVisitorTrack" :key="node.id"
+          :cx="projectedPoint(node.x, node.y).x" :cy="projectedPoint(node.x, node.y).y" r=".55"
           :class="`node-${node.event}`" />
       </svg>
       <div v-if="store.selectedVisitor && store.visitorTrackCursor" class="visitor-track-cursor"
-        :style="{ left: `${store.visitorTrackCursor.x}%`, top: `${store.visitorTrackCursor.y}%` }"><i /></div>
+        :style="scenePointStyle(store.visitorTrackCursor.x, store.visitorTrackCursor.y)"><i /></div>
 
       <template v-for="area in visitorAreaSummaries" :key="area.id">
         <button v-if="store.expandedVisitorArea !== area.id && !store.selectedVisitor" class="visitor-cluster"
-          :class="{ alarming: area.displayAbnormal > 0 }" :style="{ left: `${area.x}%`, top: `${area.y}%` }"
+          :class="{ alarming: area.displayAbnormal > 0 }" :style="scenePointStyle(area.x, area.y)"
           @click.stop="store.expandedVisitorArea = area.id">
           <i><el-icon><component :is="iconMap.UserFilled" /></el-icon><b>{{ area.displayTotal }}</b></i>
           <span><strong>{{ area.name }}</strong><small>访客 {{ area.displayTotal }} 人 · 异常 {{ area.displayAbnormal }} 人</small></span>
         </button>
         <button v-for="visitor in area.people" v-else :key="visitor.id" class="visitor-marker"
           :class="[`status-${visitorStatusTone(visitor.status)}`, { selected: store.selectedVisitor?.id === visitor.id, dimmed: store.selectedVisitor && store.selectedVisitor.id !== visitor.id }]"
-          :style="{ left: `${visitor.x}%`, top: `${visitor.y}%` }" @click.stop="store.selectVisitor(visitor)">
+          :style="scenePointStyle(visitor.x, visitor.y)" @click.stop="store.selectVisitor(visitor)">
           <span><el-icon><component :is="iconMap.UserFilled" /></el-icon></span><i>{{ visitor.maskedName }}</i>
           <div><strong>{{ visitor.maskedName }} · {{ visitor.status }}</strong><small>{{ visitor.company }}</small><small>{{ visitor.area }} · 入厂 {{ visitor.actualEntry }}</small><small>停留 {{ visitor.duration }} · 定位 {{ visitor.lastLocated }}</small></div>
         </button>
@@ -475,7 +505,7 @@ const detailTrend = computed(() => ({
       <template v-if="store.activeLayer === 'overview'">
         <button v-for="(item, index) in overviewAlertMarkers" :key="item.alert.id"
           class="overview-alert-marker" :class="[`tone-${item.alert.level}`, { active: activeOverviewAlertId === item.alert.id }]"
-          :style="{ left: `${item.x}%`, top: `${item.y}%`, '--marker-delay': `${index * .7}s` }"
+          :style="{ ...scenePointStyle(item.x, item.y), '--marker-delay': `${index * .7}s` }"
           :aria-label="`${item.alert.content}：${item.alert.area}`" @click.stop="store.locateAlert(item.alert)">
           <span><b>!</b></span>
           <div class="overview-marker-tooltip">
@@ -490,7 +520,7 @@ const detailTrend = computed(() => ({
       <template v-else-if="store.activeLayer === 'building'">
           <button v-for="building in overviewBuildingMarkers" :key="building.id"
             class="overview-building-marker" :class="{ active: activeOverviewBuilding?.id === building.id }"
-            :style="{ left: `${building.x}%`, top: `${building.y}%` }"
+            :style="scenePointStyle(building.x, building.y)"
             :aria-label="`${building.name}：${building.sub}`">
             <span><el-icon><component :is="iconMap.OfficeBuilding" /></el-icon></span>
             <div><strong>{{ building.name }}</strong><small>{{ building.sub }}</small></div>
@@ -500,7 +530,7 @@ const detailTrend = computed(() => ({
       <template v-else-if="store.activeLayer === 'device'">
           <button v-for="deviceMarker in overviewDeviceMarkers" :key="deviceMarker.id"
             class="overview-device-marker" :class="{ active: activeOverviewDevice?.id === deviceMarker.id, selected: store.selectedMarker?.id === deviceMarker.id }"
-            :style="{ left: `${deviceMarker.x}%`, top: `${deviceMarker.y}%` }"
+            :style="scenePointStyle(deviceMarker.x, deviceMarker.y)"
             :aria-label="`${deviceMarker.name}：${deviceMarker.sub}`" @click.stop="store.selectedMarker = deviceMarker">
             <span><el-icon><component :is="iconMap.Cpu" /></el-icon></span>
             <i>{{ deviceMarker.name }}</i>
@@ -517,7 +547,7 @@ const detailTrend = computed(() => ({
       <template v-else-if="store.activeLayer === 'people'">
         <button v-for="(visitor, index) in overviewVisitors" :key="visitor.id"
           class="overview-visitor-marker" :class="`status-${visitorStatusTone(visitor.status)}`"
-          :style="{ left: `${visitor.displayX}%`, top: `${visitor.displayY}%`, '--visitor-delay': `${index * .28}s` }"
+          :style="{ ...scenePointStyle(visitor.displayX, visitor.displayY), '--visitor-delay': `${index * .28}s` }"
           :aria-label="`${visitor.maskedName}：${visitor.area}`">
           <span><el-icon><component :is="iconMap.UserFilled" /></el-icon></span>
           <div><strong>{{ visitor.maskedName }} · {{ visitor.status }}</strong><small>{{ visitor.area }} · {{ visitor.company }}</small></div>
@@ -528,7 +558,7 @@ const detailTrend = computed(() => ({
         <transition-group name="camera-pop">
           <button v-for="camera in activeOverviewCameras" :key="camera.id"
             class="overview-camera-marker" :class="[`status-${camera.status}`, { selected: store.selectedCamera?.id === camera.id }]"
-            :style="{ left: `${camera.x}%`, top: `${camera.y}%` }"
+            :style="scenePointStyle(camera.x, camera.y)"
             :aria-label="`${camera.name}：${statusText[camera.status]}`" @click.stop="store.openCamera(camera)">
             <span><el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon></span>
             <div><strong>{{ camera.name }}</strong><small>{{ camera.area }} · {{ statusText[camera.status] }}</small><em>点击查看实时画面</em></div>
@@ -546,7 +576,7 @@ const detailTrend = computed(() => ({
         <div ref="videoFrameRef" class="security-video-frame"
           :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'video' }">
           <video v-if="hasPlayableVideo" ref="videoRef" :src="store.selectedCamera.videoUrl"
-            autoplay muted loop playsinline preload="metadata" poster="/assets/factory-main.png"
+            autoplay muted loop playsinline preload="metadata" poster="/assets/huijishan-campus-aerial.jpg"
             @loadedmetadata="syncRequestedVideoTime" @error="handleVideoError" />
           <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
             :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
@@ -570,7 +600,7 @@ const detailTrend = computed(() => ({
       </aside>
     </transition>
 
-    <div class="compass"><b>N</b><i>▲</i><span>3D</span></div>
+    <div v-if="!isModelMode" class="compass"><b>N</b><i>▲</i><span>航拍</span></div>
     <nav v-if="store.activeNav !== 'security' && store.activeNav !== 'people'" class="layer-bar">
       <button v-for="item in layerItems" :key="item.key" :class="{ active: store.activeLayer === item.key }" @click="selectOverviewLayer(item.key)">
         <el-icon><component :is="iconMap[item.icon]" /></el-icon><span>{{ item.label }}</span>

@@ -105,7 +105,7 @@ onMounted(load)
     </section>
     <div v-else class="mobile-order-shell">
       <header class="mobile-order-header">
-        <span>正泰集团厂区综合态势运营中心</span>
+        <span>会稽山数字孪生运营中心</span>
         <h1>{{ stageTitle }}</h1>
         <div>
           <em :class="`level-${order.level}`">{{ order.level }}告警</em>
@@ -114,7 +114,7 @@ onMounted(load)
       </header>
 
       <section class="mobile-alert-card">
-        <img :src="order.snapshotUrl || '/assets/factory-main.png'" alt="告警抓拍" />
+        <img :src="order.snapshotUrl || '/assets/huijishan-campus-aerial.jpg'" alt="告警抓拍" />
         <div>
           <h2>{{ order.content }}</h2>
           <p><span>所属区域</span>{{ order.area }}</p>
@@ -171,7 +171,7 @@ onMounted(load)
       </section>
 
       <p v-if="error" class="mobile-order-error">{{ error }}</p>
-      <footer>CHINT · DIGITAL SAFETY WORKFLOW</footer>
+      <footer>HUIJISHAN · DIGITAL SAFETY WORKFLOW</footer>
     </div>
   </main>
 </template>

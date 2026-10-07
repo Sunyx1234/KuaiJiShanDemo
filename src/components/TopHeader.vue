@@ -10,7 +10,7 @@ withDefaults(defineProps<{
   title?: string
   showGroupReturn?: boolean
 }>(), {
-  title: '正泰集团厂区综合态势运营中心',
+  title: '会稽山数字孪生运营中心',
   showGroupReturn: false,
 })
 
@@ -33,15 +33,15 @@ function switchNav(key: NavKey | 'more', disabled = false) {
 <template>
   <header class="top-header">
     <div class="brand">
-      <strong>CHINT</strong>
-      <span>智慧能源 · 赋能美好</span>
+      <strong>会稽山绍兴酒</strong>
+      <span>HUIJISHAN · SHAOXING WINE</span>
     </div>
     <nav class="nav nav--left">
       <button v-for="item in navItems.slice(0, 2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
     </nav>
     <div class="title-block">
       <h1>{{ title }}</h1>
-      <p>CHINT GROUP FACTORY OPERATIONS CENTER</p>
+      <p>HUIJISHAN DIGITAL TWIN OPERATIONS CENTER</p>
     </div>
     <nav class="nav nav--right">
       <button v-for="item in navItems.slice(2)" :key="item.key" :disabled="item.disabled" :class="{ active: store.activeNav === item.key }" @click="switchNav(item.key, item.disabled)">{{ item.label }}</button>
@@ -52,7 +52,7 @@ function switchNav(key: NavKey | 'more', disabled = false) {
       <button aria-label="切换全屏" @click="toggleFullscreen"><el-icon><FullScreen /></el-icon></button>
     </div>
     <button v-if="showGroupReturn" class="group-return-button" @click="router.push('/')">
-      <span>←</span> 返回集团地球
+      <span>←</span> 返回地球总览
     </button>
   </header>
 </template>

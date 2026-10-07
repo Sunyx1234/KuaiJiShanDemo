@@ -6,10 +6,7 @@ import type { ParkConfig } from '../data/types'
 
 const store = useGroupStore()
 const router = useRouter()
-const directoryParks = computed(() => [
-  ...store.parks.filter(park => park.id === 'jiaxing'),
-  ...store.parks.filter(park => park.id !== 'jiaxing'),
-])
+const directoryParks = computed(() => store.parks)
 
 function openPark(park: ParkConfig) {
   store.requestParkFocus(park.id)
@@ -22,13 +19,13 @@ function openPark(park: ParkConfig) {
     <section class="group-showcase-panel group-network-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>GLOBAL MANUFACTURING NETWORK</span>
-          <h2>全球制造网络</h2>
+          <span>HUIJISHAN CAMPUS</span>
+          <h2>会稽山园区</h2>
         </div>
         <i />
       </header>
 
-      <p class="group-network-intro">连接全球制造能力，以本地化生产与协同创新服务全球客户。</p>
+      <p class="group-network-intro">以绍兴园区为入口，查看园区空间模型与运营场景。</p>
 
       <div class="group-network-stats">
         <article v-for="item in store.networkSummary" :key="item.label">
@@ -38,11 +35,11 @@ function openPark(park: ParkConfig) {
       </div>
 
       <div class="group-directory-heading">
-        <span>制造基地索引</span>
-        <small>重点展示 {{ store.parks.length }} · 已接入 {{ store.connectedParks.length }}</small>
+        <span>园区入口</span>
+        <small>已接入 {{ store.connectedParks.length }} 个园区</small>
       </div>
 
-      <nav class="group-park-directory" aria-label="全球制造基地列表">
+      <nav class="group-park-directory" aria-label="会稽山园区列表">
         <button v-for="(park, index) in directoryParks" :key="park.id"
           :class="{ selected: store.selectedParkId === park.id, connected: park.status === 'connected' }"
           :aria-label="park.status === 'connected' ? `进入${park.name}` : `在地球上查看${park.name}`"

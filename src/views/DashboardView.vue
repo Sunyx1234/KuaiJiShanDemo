@@ -32,8 +32,8 @@ const activePark = computed(() => {
   return parkId ? groupStore.getPark(parkId) : null
 })
 const parkHeaderTitle = computed(() => activePark.value
-  ? `${activePark.value.shortName}综合态势运营中心`
-  : '正泰集团厂区综合态势运营中心')
+  ? `${activePark.value.shortName}数字孪生运营中心`
+  : '会稽山数字孪生运营中心')
 
 let workOrderPoller = 0
 let mountedParkId: string | null = null
@@ -76,7 +76,7 @@ onBeforeUnmount(stopParkServices)
 
 <template>
   <ScreenFrame>
-    <main class="dashboard" :class="{ 'park-dashboard': !isGroupLevel }">
+    <main class="dashboard" :class="{ 'park-dashboard': !isGroupLevel, 'group-dashboard': isGroupLevel }">
       <GroupTopHeader v-if="isGroupLevel" />
       <TopHeader v-else :title="parkHeaderTitle" show-group-return />
 
@@ -91,11 +91,6 @@ onBeforeUnmount(stopParkServices)
         </section>
         <GroupLeftOverview />
         <GroupRightOverview />
-      </div>
-
-      <div v-if="isGroupLevel" class="group-powered-by" aria-label="技术支持：中国移动">
-        <span>POWERED BY</span>
-        <strong>中国移动</strong>
       </div>
 
       <div v-else :key="`park-${activePark?.id ?? 'unknown'}-${store.activeNav}`"

@@ -29,12 +29,12 @@ async function toggleFullscreen() {
 <template>
   <header class="top-header group-top-header">
     <div class="brand">
-      <strong>CHINT</strong>
-      <span>智慧能源 · 赋能美好</span>
+      <strong>会稽山绍兴酒</strong>
+      <span>HUIJISHAN · SHAOXING WINE</span>
     </div>
     <div class="title-block">
-      <h1>正泰集团全球制造基地</h1>
-      <p>CHINT GLOBAL MANUFACTURING NETWORK</p>
+      <h1>会稽山数字孪生总览</h1>
+      <p>HUIJISHAN DIGITAL TWIN CAMPUS</p>
     </div>
     <div class="weather">
       <span>{{ clock }}</span>

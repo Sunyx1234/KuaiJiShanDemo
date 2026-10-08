@@ -88,7 +88,7 @@ export const parks: ParkConfig[] = [
     latitude: 30.0,
     status: 'connected',
     sceneType: 'gltf',
-    sceneAsset: '/assets/models/huijishan-campus-v1.glb',
+    sceneAsset: '/assets/models/huijishan-campus-v8.glb',
     summary: '会稽山绍兴园区数字孪生场景，可进入园区查看三维模型、安监与访客演示视图。',
     products: '园区三维模型、安监场景、访客管理',
     positioning: '绍兴园区数字孪生展示入口',

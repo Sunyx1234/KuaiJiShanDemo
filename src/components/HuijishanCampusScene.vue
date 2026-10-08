@@ -9,7 +9,7 @@ const props = defineProps<{ compact?: boolean }>()
 const emit = defineEmits<{ ready: []; 'view-change': [] }>()
 
 const assetRoot = '/assets/models/'
-const modelUrl = `${assetRoot}huijishan-campus-v1.glb`
+const modelUrl = `${assetRoot}huijishan-campus-v8.glb`
 const host = ref<HTMLDivElement | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -103,7 +103,7 @@ function frameModel(object: THREE.Object3D) {
     distance *= correction
   }
   // Sparse outer geometry needs less screen space than the occupied campus footprint.
-  distance *= props.compact ? .53 : .86
+  distance *= props.compact ? .66 : .86
   homeTarget = center
   homePosition = center.clone().addScaledVector(direction, distance)
   camera.near = Math.max(.01, distance / 1000)
@@ -359,11 +359,11 @@ onBeforeUnmount(() => {
 <template>
   <main class="obj-preview" :class="{ compact }">
     <header v-if="!compact" class="obj-preview__header">
-      <div><small>HUIJISHAN · MODEL V1.0</small><h1>会稽山园区 <span>/</span> 完整园区模型</h1></div>
+      <div><small>HUIJISHAN · MODEL V8</small><h1>会稽山园区 <span>/</span> 完整园区模型</h1></div>
       <a href="/#/">返回大屏</a>
     </header>
     <section class="obj-preview__stage">
-      <div ref="host" class="obj-preview__canvas" aria-label="会稽山园区 v1.0 三维模型，可拖动旋转、滚轮缩放" />
+      <div ref="host" class="obj-preview__canvas" aria-label="会稽山园区 v8 三维模型，可拖动旋转、滚轮缩放" />
       <div v-if="loading" class="obj-preview__message" role="status">正在加载园区模型{{ progress ? ` · ${progress}%` : '…' }}</div>
       <div v-if="error" class="obj-preview__message" role="alert">{{ error }}</div>
       <div class="obj-preview__controls">

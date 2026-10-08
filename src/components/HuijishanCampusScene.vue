@@ -4,12 +4,19 @@ import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js'
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 
 const props = defineProps<{ compact?: boolean }>()
 const emit = defineEmits<{ ready: []; 'view-change': [] }>()
 
 const assetRoot = '/assets/models/'
 const modelUrl = `${assetRoot}huijishan-campus-v8.glb`
+const lightingUrl = `${assetRoot}huijishan-lighting-v8.json`
+type Fixture = { position: [number, number, number]; color: [number, number, number]; power: number; kind: string }
 const host = ref<HTMLDivElement | null>(null)
 const loading = ref(true)
 const error = ref('')
@@ -17,11 +24,15 @@ const progress = ref(0)
 const autoRotate = ref(false)
 
 let renderer: THREE.WebGLRenderer | null = null
+let composer: EffectComposer | null = null
 let scene: THREE.Scene | null = null
 let camera: THREE.PerspectiveCamera | null = null
 let controls: OrbitControls | null = null
 let model: THREE.Group | null = null
 let sunlight: THREE.DirectionalLight | null = null
+let fixtures: Fixture[] = []
+let localLights: THREE.PointLight[] = []
+let groundLights: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial> | null = null
 let environmentMap: THREE.Texture | null = null
 let environmentGenerator: THREE.PMREMGenerator | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -35,14 +46,72 @@ let viewInteracted = false
 
 function render(now: number) {
   frame = 0
-  if (disposed || document.hidden || !renderer || !scene || !camera || !controls) return
+  if (disposed || document.hidden || !renderer || !composer || !scene || !camera || !controls) return
   controls.update()
-  renderer.render(scene, camera)
+  updateLocalLights()
+  composer.render()
   if (now - lastProjectionEmit > 32) {
     lastProjectionEmit = now
     emit('view-change')
   }
   if (controls.autoRotate) requestRender()
+}
+
+function createGroundLights(data: Fixture[]) {
+  if (!scene) return
+  const positions: number[] = []
+  const uvs: number[] = []
+  for (const fixture of data) {
+    const width = fixture.kind === 'street' ? 22 : 11
+    const depth = fixture.kind === 'street' ? 16 : 9
+    const x = fixture.position[0]
+    const z = -fixture.position[1]
+    const corners = [
+      [x - width / 2, .27, z - depth / 2],
+      [x + width / 2, .27, z - depth / 2],
+      [x + width / 2, .27, z + depth / 2],
+      [x - width / 2, .27, z + depth / 2],
+    ]
+    for (const index of [0, 2, 1, 0, 3, 2]) {
+      positions.push(...corners[index])
+      uvs.push(...[[0, 0], [1, 0], [1, 1], [0, 1]][index])
+    }
+  }
+  const geometry = new THREE.BufferGeometry()
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3))
+  geometry.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2))
+  const material = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    uniforms: { color: { value: new THREE.Color(1, .39, .075) }, strength: { value: .4 } },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+    fragmentShader: 'varying vec2 vUv; uniform vec3 color; uniform float strength; void main() { float d = length((vUv - .5) * 2.0); float a = pow(max(0.0, 1.0 - d), 2.4) * strength; gl_FragColor = vec4(color, a); }',
+  })
+  groundLights = new THREE.Mesh(geometry, material)
+  groundLights.renderOrder = 1
+  groundLights.frustumCulled = false
+  scene.add(groundLights)
+}
+
+function updateLocalLights() {
+  if (!camera || !controls || !fixtures.length) return
+  const distant = camera.position.distanceTo(controls.target) > 260
+  const selected = distant
+    ? fixtures.filter((_, index) => index % 7 === 0).slice(0, localLights.length)
+    : [...fixtures].sort((a, b) => {
+        const aPoint = new THREE.Vector3(a.position[0], a.position[2], -a.position[1])
+        const bPoint = new THREE.Vector3(b.position[0], b.position[2], -b.position[1])
+        return aPoint.distanceToSquared(controls!.target) - bPoint.distanceToSquared(controls!.target)
+      }).slice(0, localLights.length)
+  localLights.forEach((light, index) => {
+    const fixture = selected[index]
+    if (!fixture) { light.intensity = 0; return }
+    light.position.set(fixture.position[0], fixture.position[2], -fixture.position[1])
+    light.color.setRGB(...fixture.color)
+    light.intensity = fixture.power / (4 * Math.PI)
+  })
 }
 
 function requestRender() {
@@ -57,6 +126,7 @@ function resize() {
   camera.aspect = width / height
   camera.updateProjectionMatrix()
   renderer.setSize(width, height, false)
+  composer?.setSize(width, height)
   if (model && !viewInteracted) frameModel(model)
   requestRender()
 }
@@ -281,6 +351,13 @@ function dispose() {
   environmentMap?.dispose()
   environmentGenerator?.dispose()
   sunlight?.shadow.dispose()
+  groundLights?.removeFromParent()
+  groundLights?.geometry.dispose()
+  groundLights?.material.dispose()
+  groundLights = null
+  localLights.forEach(light => light.removeFromParent())
+  localLights = []
+  composer?.dispose()
   renderer?.dispose()
   renderer?.domElement.remove()
 }
@@ -294,11 +371,11 @@ onMounted(() => {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
     renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = .94
+    renderer.toneMapping = THREE.AgXToneMapping
+    renderer.toneMappingExposure = 1
     renderer.setClearColor(0x07182b, 0)
     renderer.shadowMap.enabled = true
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap
+    renderer.shadowMap.type = THREE.PCFShadowMap
     renderer.shadowMap.autoUpdate = false
     host.value.appendChild(renderer.domElement)
     environmentGenerator = new THREE.PMREMGenerator(renderer)
@@ -306,18 +383,39 @@ onMounted(() => {
     environmentMap = environmentGenerator.fromScene(room).texture
     room.dispose()
     scene.environment = environmentMap
-    scene.environmentIntensity = .24
-    scene.add(new THREE.HemisphereLight(0xc8e5ff, 0x274059, .56))
-    sunlight = new THREE.DirectionalLight(0xffe2bd, 2.08)
+    scene.environmentIntensity = .075
+    scene.add(new THREE.HemisphereLight(0x668fcb, 0x131b2e, .2))
+    sunlight = new THREE.DirectionalLight(0x81acff, .72)
     sunlight.position.set(-90, 95, 105)
     sunlight.castShadow = true
     sunlight.shadow.mapSize.set(2048, 2048)
     sunlight.shadow.bias = -0.00015
     sunlight.shadow.normalBias = .025
     scene.add(sunlight)
-    const fill = new THREE.DirectionalLight(0x80bfff, .27)
+    const fill = new THREE.DirectionalLight(0x5479af, .12)
     fill.position.set(90, 55, -85)
     scene.add(fill)
+    composer = new EffectComposer(renderer)
+    composer.addPass(new RenderPass(scene, camera))
+    const contactShadows = new SSAOPass(scene, camera, 1, 1, 8)
+    contactShadows.kernelRadius = 1.3
+    contactShadows.minDistance = .002
+    contactShadows.maxDistance = .045
+    composer.addPass(contactShadows)
+    composer.addPass(new UnrealBloomPass(new THREE.Vector2(1, 1), .17, .12, 1.5))
+    composer.addPass(new OutputPass())
+    localLights = Array.from({ length: 12 }, () => {
+      const light = new THREE.PointLight(0xffc080, 0, 32, 2)
+      scene!.add(light)
+      return light
+    })
+    fetch(lightingUrl)
+      .then(response => {
+        if (!response.ok) throw new Error(`灯光配置返回 ${response.status}`)
+        return response.json() as Promise<{ fixtures: Fixture[] }>
+      })
+      .then(data => { if (!disposed) { fixtures = data.fixtures; createGroundLights(fixtures); requestRender() } })
+      .catch(error => console.error('园区夜景灯光加载失败', error))
     controls = new OrbitControls(camera, renderer.domElement)
     controls.enableDamping = false
     controls.enablePan = true

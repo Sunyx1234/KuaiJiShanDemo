@@ -1,59 +1,26 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useGroupStore } from '../stores/group'
-import type { ParkConfig } from '../data/types'
-
-const store = useGroupStore()
+import { useSalesStore } from '../stores/sales'
+import { formatSalesAmount } from '../data/sales'
 const router = useRouter()
-const directoryParks = computed(() => store.parks)
-
-function openPark(park: ParkConfig) {
-  store.requestParkFocus(park.id)
-  if (park.status === 'connected') void router.push(`/park/${park.id}`)
-}
+const sales = useSalesStore()
 </script>
 
 <template>
-  <aside class="group-showcase-column group-left-overview">
-    <section class="group-showcase-panel group-network-panel">
-      <header class="group-showcase-heading">
-        <div>
-          <span>HUIJISHAN CAMPUS</span>
-          <h2>会稽山园区</h2>
-        </div>
-        <i />
-      </header>
-
-      <p class="group-network-intro">以绍兴园区为入口，查看园区空间模型与运营场景。</p>
-
-      <div class="group-network-stats">
-        <article v-for="item in store.networkSummary" :key="item.label">
-          <strong>{{ item.value }}<small>{{ item.unit }}</small></strong>
-          <span>{{ item.label }}</span>
-        </article>
-      </div>
-
-      <div class="group-directory-heading">
-        <span>园区入口</span>
-        <small>已接入 {{ store.connectedParks.length }} 个园区</small>
-      </div>
-
-      <nav class="group-park-directory" aria-label="会稽山园区列表">
-        <button v-for="(park, index) in directoryParks" :key="park.id"
-          :class="{ selected: store.selectedParkId === park.id, connected: park.status === 'connected' }"
-          :aria-label="park.status === 'connected' ? `进入${park.name}` : `在地球上查看${park.name}`"
-          @mouseenter="store.setHoveredPark(park.id)" @mouseleave="store.setHoveredPark(null)"
-          @focus="store.setHoveredPark(park.id)" @blur="store.setHoveredPark(null)"
-          @click="openPark(park)">
-          <b>{{ String(index + 1).padStart(2, '0') }}</b>
-          <span>
-            <strong>{{ park.shortName }}</strong>
-            <small>{{ park.city }}</small>
-          </span>
-          <em>{{ park.status === 'connected' ? '进入' : '查看' }} →</em>
+  <aside class="group-showcase-column group-left-overview sales-left">
+    <section class="group-showcase-panel sales-summary">
+      <header class="group-showcase-heading"><div><span>SALES NETWORK</span><h2>黄酒销售流向</h2></div></header>
+      <p class="sales-intro">从绍兴出发，连接各地市场</p>
+      <div class="sales-total"><span>订单总金额</span><strong>{{ formatSalesAmount(sales.totalAmount) }}<small>万元</small></strong></div>
+      <div class="sales-summary-stats"><div><b>{{ sales.orders.length }}</b><span>目的地市</span></div><div><b>{{ sales.totalQuantity.toLocaleString() }}</b><span>订单总箱数</span></div></div>
+      <header class="sales-list-heading"><h3>订单轮播</h3><button @click="sales.playing = !sales.playing">{{ sales.playing ? '暂停轮播' : '继续轮播' }}</button></header>
+      <nav class="sales-order-list" aria-label="销售订单">
+        <button v-for="(order, index) in sales.orders" :key="order.id" :class="{ active: sales.activeIndex === index }" :aria-pressed="sales.activeIndex === index" @click="sales.selectOrder(index)">
+          <span class="sales-order-number">{{ String(index + 1).padStart(2, '0') }}</span><span><b>绍兴 → {{ order.city }}</b><small>{{ order.quantity.toLocaleString() }} 箱 · {{ order.status }}</small></span><strong>{{ formatSalesAmount(order.amount) }}<small>万元</small></strong>
         </button>
       </nav>
+      <div class="sales-playback sales-list-playback"><button aria-label="上一笔订单" @click="sales.selectOrder(sales.activeIndex - 1)">←</button><span>订单 {{ sales.activeIndex + 1 }} / {{ sales.orders.length }}</span><button aria-label="下一笔订单" @click="sales.selectOrder(sales.activeIndex + 1)">→</button></div>
+      <button class="sales-campus-entry" @click="router.push('/park/huijishan')">进入绍兴园区 <span>→</span></button>
     </section>
   </aside>
 </template>

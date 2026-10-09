@@ -39,7 +39,7 @@ function selectShowcase(index: number) {
     <section class="group-showcase-panel group-performance-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>CAMPUS OPERATIONS · DEMO</span>
+          <span>CAMPUS OPERATIONS</span>
           <h2>园区态势</h2>
         </div>
         <div class="group-showcase-tabs" aria-label="经营指标维度切换">
@@ -58,7 +58,7 @@ function selectShowcase(index: number) {
               <strong>{{ activePerformance.hero.value }}<small>{{ activePerformance.hero.unit }}</small></strong>
               <p>{{ activePerformance.hero.label }}</p>
             </div>
-            <em><i />{{ activePerformance.hero.badge }}</em>
+
           </div>
           <div class="group-performance-indicators">
             <article v-for="indicator in activePerformance.indicators" :key="indicator.label">
@@ -67,7 +67,7 @@ function selectShowcase(index: number) {
               <span>{{ indicator.label }}</span>
             </article>
           </div>
-          <p class="group-performance-description">{{ activePerformance.description }}</p>
+
         </div>
       </Transition>
     </section>
@@ -75,7 +75,7 @@ function selectShowcase(index: number) {
     <section class="group-showcase-panel group-achievement-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>CAMPUS DATA · DEMO</span>
+          <span>CAMPUS DATA</span>
           <h2>园区运行专题</h2>
         </div>
         <div class="group-showcase-tabs" aria-label="成果主题切换">
@@ -103,7 +103,7 @@ function selectShowcase(index: number) {
               <span>{{ item.label }}</span>
             </article>
           </div>
-          <p class="group-achievement-description">{{ activeShowcase.description }}</p>
+
         </div>
       </Transition>
     </section>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
@@ -9,8 +9,11 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { SSAOPass } from 'three/addons/postprocessing/SSAOPass.js'
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
+import { createCampusRegionHighlight } from '../three/createCampusRegionHighlight'
+import type { CampusRegion } from '../data/processRegions'
+import { createCampusGridGround } from '../three/createCampusGridGround'
 
-const props = defineProps<{ compact?: boolean }>()
+const props = defineProps<{ compact?: boolean; highlightRegion?: CampusRegion | null }>()
 const emit = defineEmits<{ ready: []; 'view-change': [] }>()
 
 const assetRoot = '/assets/models/'
@@ -33,6 +36,7 @@ let sunlight: THREE.DirectionalLight | null = null
 let fixtures: Fixture[] = []
 let localLights: THREE.PointLight[] = []
 let groundLights: THREE.Mesh<THREE.BufferGeometry, THREE.ShaderMaterial> | null = null
+let gridGround: ReturnType<typeof createCampusGridGround> | null = null
 let environmentMap: THREE.Texture | null = null
 let environmentGenerator: THREE.PMREMGenerator | null = null
 let resizeObserver: ResizeObserver | null = null
@@ -41,6 +45,7 @@ let disposed = false
 let homePosition = new THREE.Vector3()
 let homeTarget = new THREE.Vector3()
 let modelBounds = new THREE.Box3()
+let regionHighlight: ReturnType<typeof createCampusRegionHighlight> | null = null
 let lastProjectionEmit = 0
 let viewInteracted = false
 
@@ -49,12 +54,13 @@ function render(now: number) {
   if (disposed || document.hidden || !renderer || !composer || !scene || !camera || !controls) return
   controls.update()
   updateLocalLights()
+  const transitioning = regionHighlight?.update()
   composer.render()
   if (now - lastProjectionEmit > 32) {
     lastProjectionEmit = now
     emit('view-change')
   }
-  if (controls.autoRotate) requestRender()
+  if (controls.autoRotate || transitioning) requestRender()
 }
 
 function createGroundLights(data: Fixture[]) {
@@ -148,6 +154,7 @@ function frameModel(object: THREE.Object3D) {
   })
   if (bounds.isEmpty()) bounds.setFromObject(object)
   modelBounds = bounds
+  regionHighlight?.setRegion(props.highlightRegion, modelBounds)
   const size = bounds.getSize(new THREE.Vector3())
   const center = bounds.getCenter(new THREE.Vector3())
   camera.aspect = host.value.clientWidth / Math.max(1, host.value.clientHeight)
@@ -355,6 +362,10 @@ function dispose() {
   groundLights?.geometry.dispose()
   groundLights?.material.dispose()
   groundLights = null
+  gridGround?.removeFromParent()
+  gridGround?.geometry.dispose()
+  gridGround?.material.dispose()
+  gridGround = null
   localLights.forEach(light => light.removeFromParent())
   localLights = []
   composer?.dispose()
@@ -431,7 +442,10 @@ onMounted(() => {
         if (disposed || !scene) return
         model = gltf.scene
         finishMaterials(model)
+        regionHighlight = createCampusRegionHighlight(model)
         scene.add(model)
+        gridGround = createCampusGridGround(model)
+        scene.add(gridGround)
         frameModel(model)
         loading.value = false
         emit('ready')
@@ -446,6 +460,11 @@ onMounted(() => {
     error.value = '当前设备无法创建 WebGL 场景。'
   }
   document.addEventListener('visibilitychange', onVisibilityChange)
+})
+
+watch(() => props.highlightRegion, region => {
+  regionHighlight?.setRegion(region, modelBounds)
+  requestRender()
 })
 
 onBeforeUnmount(() => {

@@ -1,5 +1,5 @@
 export type StatusTone = 'normal' | 'info' | 'attention' | 'alarm' | 'critical'
-export type NavKey = 'overview' | 'security' | 'people'
+export type NavKey = 'overview' | 'production' | 'quality' | 'equipment' | 'fulfillment' | 'security' | 'people'
 export type LayerKey = 'overview' | 'building' | 'device' | 'people' | 'camera' | 'risk' | 'fire' | 'environment'
 export type CameraStatus = 'online' | 'offline' | 'abnormal' | 'alarm'
 export type AiAlgorithm = '明火' | '烟雾' | '危险作业' | '安全帽' | '反光衣'

@@ -25,6 +25,7 @@ export async function fetchWorkOrderConfig() {
 export async function fetchWorkOrders() {
   const response = await fetch(endpoint, { cache: 'no-store' })
   const body = await parseResponse<{ orders: WorkOrder[] }>(response)
+  if (!Array.isArray(body.orders)) throw new Error('工单服务未返回有效订单列表')
   return body.orders
 }
 

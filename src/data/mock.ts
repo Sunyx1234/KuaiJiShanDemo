@@ -1,23 +1,16 @@
+import { factoryMetrics } from './factory'
 import type { AiAlert, AiCategoryStat, AlarmHotspot, AlertItem, CameraArea, LayerKey, Metric, NavKey, SceneMarker, SecurityCamera, Visitor, VisitorArea, VisitorException } from './types'
 
 export const navItems: { key: NavKey | 'more'; label: string; disabled?: boolean }[] = [
-  { key: 'overview', label: '综合态势' },
-  { key: 'security', label: '安全监控' },
-  { key: 'people', label: '访客管理' },
-  { key: 'more', label: '更多模块', disabled: true },
-]
-
-const baseMetrics: Metric[] = [
-  { label: '今日产能', value: '12,680', unit: '件', delta: '8.6%', positive: true, icon: 'DataLine' },
-  { label: '设备在线率', value: '98.2', unit: '%', delta: '2.3%', positive: true, icon: 'Cpu' },
-  { label: '能源利用率', value: '91.6', unit: '%', delta: '5.7%', positive: true, icon: 'Lightning' },
-  { label: '人员在岗率', value: '97.5', unit: '%', delta: '1.8%', positive: true, icon: 'UserFilled' },
-  { label: '风险点总数', value: '158', unit: '处', delta: '8.6%', positive: true, icon: 'LocationFilled' },
-  { label: '今日告警数', value: '23', unit: '条', delta: '15.0%', positive: true, icon: 'BellFilled' },
+  { key: 'overview', label: '企业总览' },
+  { key: 'production', label: '生产工艺' },
+  { key: 'quality', label: '质量追溯' },
+  { key: 'equipment', label: '设备运维' },
+  { key: 'fulfillment', label: '订单履约' },
 ]
 
 export const metricsByNav: Record<NavKey, Metric[]> = {
-  overview: baseMetrics,
+  ...factoryMetrics,
   security: [
     { label: '摄像头总数', value: '326', unit: '台', delta: '3.2%', positive: true, icon: 'VideoCameraFilled' },
     { label: '摄像头在线率', value: '97.9', unit: '%', delta: '0.8%', positive: true, icon: 'Connection' },

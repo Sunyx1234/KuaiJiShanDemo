@@ -8,6 +8,10 @@ import type { ParkConfig } from '../data/types'
 import { globeBoundarySources } from '../data/globeBoundaries'
 import { createGeoJsonBoundaryGroup } from '../services/globeGeoJson'
 import { useGroupStore } from '../stores/group'
+import { orderLifecycles } from '../data/fulfillment'
+import { useOrdersStore } from '../stores/orders'
+import { useSalesStore } from '../stores/sales'
+import { formatSalesAmount } from '../data/sales'
 
 interface PinProjection {
   left: number
@@ -32,6 +36,22 @@ interface ParkTransition {
 
 const router = useRouter()
 const store = useGroupStore()
+const sales = useSalesStore()
+const orderDetails = useOrdersStore()
+const activeLifecycle = computed(() => orderLifecycles[sales.activeIndex]!)
+const salesDestination = ref<{ left: number; top: number; visible: boolean } | null>(null)
+const salesCardStyle = computed(() => {
+  const point = salesDestination.value
+  const width = canvasHost.value?.clientWidth ?? 1920
+  const height = canvasHost.value?.clientHeight ?? 1080
+  const cardWidth = 340
+  const proposedLeft = (point?.left ?? width / 2) + 34
+  const left = Math.min(width - 440 - cardWidth, Math.max(420, proposedLeft))
+  const top = Math.min(height - 340, Math.max(155, (point?.top ?? height / 2) - 340))
+  return { left: `${left}px`, top: `${top}px`, opacity: sales.opacity, transform: `translateY(${(1 - sales.opacity) * 10}px)` }
+})
+const salesArcs: THREE.Mesh<THREE.TubeGeometry, THREE.ShaderMaterial>[] = []
+const salesMarkers: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = []
 const canvasHost = ref<HTMLDivElement | null>(null)
 const sceneRoot = ref<HTMLElement | null>(null)
 const webglAvailable = ref(true)
@@ -189,7 +209,6 @@ function createSurfaceRing(
 function createNetworkArc(start: THREE.Vector3, end: THREE.Vector3, index: number) {
   const pointCount = 56
   const points: THREE.Vector3[] = []
-  const flowProgress = new Float32Array(pointCount)
   const startNormal = start.clone().normalize()
   const endNormal = end.clone().normalize()
 
@@ -198,17 +217,18 @@ function createNetworkArc(start: THREE.Vector3, end: THREE.Vector3, index: numbe
     const normal = startNormal.clone().lerp(endNormal, progress).normalize()
     const height = 1.535 + Math.sin(progress * Math.PI) * 0.11
     points.push(normal.multiplyScalar(height))
-    flowProgress[pointIndex] = progress
   }
 
-  const geometry = new THREE.BufferGeometry().setFromPoints(points)
-  geometry.setAttribute('flowProgress', new THREE.BufferAttribute(flowProgress, 1))
+  const geometry = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(points), 80, .003, 6, false)
+  const uv = geometry.getAttribute('uv')
+  geometry.setAttribute('flowProgress', new THREE.Float32BufferAttribute(Array.from({ length: uv.count }, (_, i) => uv.getX(i)), 1))
   const material = new THREE.ShaderMaterial({
     transparent: true,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     uniforms: {
       uTime: networkFlowTime,
+      uActive: { value: 0 },
       uSpeed: { value: 0.11 + index * 0.004 },
       uOffset: { value: index / Math.max(1, store.parks.length - 1) },
       uBaseColor: { value: new THREE.Color(0x1d6f9f) },
@@ -224,25 +244,27 @@ function createNetworkArc(start: THREE.Vector3, end: THREE.Vector3, index: numbe
     `,
     fragmentShader: `
       uniform float uTime;
+      uniform float uActive;
       uniform float uSpeed;
       uniform float uOffset;
       uniform vec3 uBaseColor;
       uniform vec3 uHighlightColor;
       varying float vFlowProgress;
       void main() {
-        float flowHead = fract(uTime * uSpeed + uOffset);
+        float flowHead = clamp((uTime - 0.8) / 5.4, 0.0, 1.0);
         float flowDistance = abs(vFlowProgress - flowHead);
         flowDistance = min(flowDistance, 1.0 - flowDistance);
         float movingBand = smoothstep(0.18, 0.0, flowDistance);
         float brightCore = smoothstep(0.055, 0.0, flowDistance);
         vec3 flowColor = mix(uBaseColor, uHighlightColor, movingBand);
-        float flowOpacity = 0.34 + movingBand * 0.46 + brightCore * 0.16;
+        float flowOpacity = (0.55 + movingBand * 0.30 + brightCore * 0.15) * uActive;
+        flowColor = mix(uBaseColor, flowColor, uActive);
         gl_FragColor = vec4(flowColor, flowOpacity);
       }
     `,
   })
 
-  return new THREE.Line(geometry, material)
+  return new THREE.Mesh(geometry, material)
 }
 
 function loadEarthTexture(path: string) {
@@ -359,13 +381,16 @@ function createEarth() {
     group.add(createSurfaceRing(hubPosition, 0.036, 0.04, 0x45d799, 0.3))
     group.add(createSurfaceRing(hubPosition, 0.06, 0.064, 0x2aa9ff, 0.16))
 
-    store.parks
-      .filter((park) => park.id !== 'huijishan')
-      .forEach((park, index) => {
-        const target = parkAnchors.get(park.id)
-        if (!target) return
-        group.add(createNetworkArc(hubPosition, target.position, index))
-      })
+    sales.orders.forEach((order, index) => {
+      const position = latLngToVector3(order.latitude, order.longitude, 1.54)
+      const arc = createNetworkArc(hubPosition, position, index)
+      salesArcs.push(arc)
+      group.add(arc)
+      const marker = new THREE.Mesh(new THREE.SphereGeometry(.009, 12, 8), new THREE.MeshBasicMaterial({ color: 0x559bb8, transparent: true, opacity: .45 }))
+      marker.position.copy(position)
+      salesMarkers.push(marker)
+      group.add(marker)
+    })
   }
 
   return group
@@ -511,7 +536,27 @@ function updatePinPositions() {
 }
 
 function updateNetworkAnimation(elapsedSeconds: number) {
-  networkFlowTime.value = elapsedSeconds
+  networkFlowTime.value = sales.elapsed
+  salesArcs.forEach((arc, index) => {
+    arc.material.uniforms.uActive!.value = index === sales.activeIndex ? sales.opacity : 0
+    arc.material.uniforms.uBaseColor!.value.set(index === sales.activeIndex ? 0xc99845 : 0x1d6f9f)
+    arc.material.uniforms.uHighlightColor!.value.set(0xffd995)
+  })
+  salesMarkers.forEach((marker, index) => {
+    const active = index === sales.activeIndex
+    marker.material.color.set(active ? 0xffd995 : 0x559bb8)
+    marker.material.opacity = active ? .18 + sales.opacity * .82 : .18
+    marker.scale.setScalar(active ? 1.6 + Math.sin(elapsedSeconds * 4) * .3 : 1)
+  })
+  if (camera && earthGroup && canvasHost.value) {
+    const target = salesMarkers[sales.activeIndex]
+    if (target) {
+      const world = target.getWorldPosition(new THREE.Vector3())
+      const facing = world.clone().normalize().dot(camera.position.clone().normalize()) > .16
+      const point = world.project(camera)
+      salesDestination.value = { left: (point.x + 1) * .5 * canvasHost.value.clientWidth, top: (1 - point.y) * .5 * canvasHost.value.clientHeight, visible: facing && point.z > -1 && point.z < 1 }
+    }
+  }
 
   store.parks.forEach((park, index) => {
     const marker = parkMarkers.get(park.id)
@@ -611,6 +656,8 @@ function disposeScene() {
   parkTransition = null
   navigationPending = false
   transitionMode.value = null
+  salesArcs.length = 0
+  salesMarkers.length = 0
   parkAnchors.clear()
   parkMarkers.clear()
   parkPulseRings.clear()
@@ -676,7 +723,9 @@ function initializeScene() {
         controls.autoRotate = !reducedMotion.matches && store.parks.length > 1 && !store.hoveredParkId
         controls.update()
       }
-      const elapsedSeconds = animationClock.getElapsedTime()
+      const delta = animationClock.getDelta()
+      if (!document.hidden) sales.tick(Math.min(delta, .1))
+      const elapsedSeconds = animationClock.elapsedTime
       updateCloudAnimation(elapsedSeconds)
       updateNetworkAnimation(elapsedSeconds)
       updatePinPositions()
@@ -779,7 +828,7 @@ onBeforeUnmount(disposeScene)
   <section ref="sceneRoot" class="group-globe-scene" @click.self="store.setHoveredPark(null)">
     <div class="group-globe__title">
       <span>HUIJISHAN · SHAOXING</span>
-      <strong>会稽山绍兴园区</strong>
+      <strong>绍兴出发 · 销往各地</strong>
     </div>
     <div class="group-globe__status">
       <span><i class="connected" />园区数字场景已接入</span>
@@ -789,7 +838,7 @@ onBeforeUnmount(disposeScene)
     <div v-else class="group-globe__fallback">
       <i />
       <strong>当前设备无法启用三维地球</strong>
-      <span>仍可通过园区列表进入三维场景。</span>
+      <span>仍可查看订单信息或进入绍兴园区。</span>
       <div>
         <button v-for="park in store.parks" :key="park.id" :disabled="park.status !== 'connected'"
           @click="openPark(park)">
@@ -814,7 +863,7 @@ onBeforeUnmount(disposeScene)
 
       <article v-if="store.hoveredPark && hoveredProjection?.visible" class="group-park-tooltip"
         :class="store.hoveredPark.status" :style="tooltipStyle()"
-        @mouseenter="store.setHoveredPark(store.hoveredPark.id)"
+        @mouseenter="store.hoveredPark && store.setHoveredPark(store.hoveredPark.id)"
         @mouseleave="store.setHoveredPark(null)">
         <header>
           <span>DIGITAL TWIN CAMPUS</span>
@@ -842,6 +891,15 @@ onBeforeUnmount(disposeScene)
       </article>
     </div>
 
+    <div v-if="webglAvailable && salesDestination?.visible" class="sales-city-label" :style="{ left: `${salesDestination.left}px`, top: `${salesDestination.top}px`, opacity: sales.opacity }"><i /><span>{{ sales.activeOrder.city }}<small>订单目的地</small></span></div>
+    <article v-if="!webglAvailable || salesDestination?.visible" class="sales-floating-card" :style="salesCardStyle" aria-label="销售订单详情">
+      <header><span>SALES ORDER</span><small>{{ sales.activeOrder.status }}</small></header>
+      <h3>绍兴 <i>→</i> {{ sales.activeOrder.city }}</h3>
+      <div class="sales-floating-amount"><strong>{{ formatSalesAmount(sales.activeOrder.amount) }}<small>万元</small></strong><span>{{ sales.activeOrder.quantity.toLocaleString() }} 箱</span></div>
+      <dl><div><dt>客户</dt><dd>{{ sales.activeOrder.customer }}</dd></div><div><dt>产品</dt><dd>{{ sales.activeOrder.product }}</dd></div><div><dt>订单</dt><dd>{{ sales.activeOrder.id }}</dd></div><div><dt>期望到货</dt><dd>{{ activeLifecycle.expectedArrival.slice(5) }}</dd></div></dl><button class="sales-order-detail-button" @click="orderDetails.open(sales.activeOrder.id)">查看订单生命周期 →</button>
+      <div class="sales-progress"><i :style="{ width: `${sales.progress * 100}%` }" /></div>
+    </article>
+    <div class="sales-globe-caption" :style="{ opacity: sales.opacity }"><span>绍兴园区</span><i>→</i><strong>{{ sales.activeOrder.city }}</strong><em>销售订单流向</em></div>
     <Transition name="group-focus">
       <div v-if="transitioningPark && transitionMode === 'navigate'" class="group-globe__transition" aria-live="polite">
         <i><u /></i>

@@ -1,25 +1,23 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, onBeforeUnmount, watch } from 'vue'
+import { computed, defineAsyncComponent, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenFrame from '../components/ScreenFrame.vue'
 import TopHeader from '../components/TopHeader.vue'
+import EnterpriseMetrics from '../components/EnterpriseMetrics.vue'
+import EnterpriseBusinessAnalysis from '../components/EnterpriseBusinessAnalysis.vue'
+import EnterpriseProductionSummary from '../components/EnterpriseProductionSummary.vue'
+import EnterpriseActivity from '../components/EnterpriseActivity.vue'
+import EnterpriseOrderList from '../components/EnterpriseOrderList.vue'
 import MetricStrip from '../components/MetricStrip.vue'
-import LeftMonitor from '../components/LeftMonitor.vue'
 import CenterScene from '../components/CenterScene.vue'
-import RightOperations from '../components/RightOperations.vue'
-import BottomDock from '../components/BottomDock.vue'
-import SecurityLeft from '../components/SecurityLeft.vue'
-import SecurityRight from '../components/SecurityRight.vue'
-import SecurityWorkflowDock from '../components/SecurityWorkflowDock.vue'
-import VisitorLeft from '../components/VisitorLeft.vue'
-import VisitorRight from '../components/VisitorRight.vue'
-import VisitorTimelineDock from '../components/VisitorTimelineDock.vue'
+import FactoryPanel from '../components/FactoryPanel.vue'
+import OrderDetailDialog from '../components/OrderDetailDialog.vue'
+import FactoryDetailDock from '../components/FactoryDetailDock.vue'
 import GroupTopHeader from '../components/GroupTopHeader.vue'
 import GroupLeftOverview from '../components/GroupLeftOverview.vue'
 import GroupRightOverview from '../components/GroupRightOverview.vue'
 import { useDashboardStore } from '../stores/dashboard'
 import { useGroupStore } from '../stores/group'
-import { configureSecurityVideoUrls } from '../services/securityVideoUrls'
 
 const route = useRoute()
 const router = useRouter()
@@ -35,24 +33,10 @@ const parkHeaderTitle = computed(() => activePark.value
   ? `${activePark.value.shortName}数字孪生运营中心`
   : '会稽山数字孪生运营中心')
 
-let workOrderPoller = 0
 let mountedParkId: string | null = null
-
-function stopParkServices() {
-  window.clearInterval(workOrderPoller)
-  workOrderPoller = 0
-}
-
-function startParkServices() {
-  if (workOrderPoller) return
-  void configureSecurityVideoUrls()
-  void store.loadWorkOrders()
-  workOrderPoller = window.setInterval(() => void store.loadWorkOrders(), 3000)
-}
 
 watch([isGroupLevel, () => route.params.parkId], ([groupLevel]) => {
   if (groupLevel) {
-    stopParkServices()
     mountedParkId = null
     groupStore.selectPark(null)
     return
@@ -68,10 +52,7 @@ watch([isGroupLevel, () => route.params.parkId], ([groupLevel]) => {
     }
     groupStore.selectPark(activePark.value.id)
   }
-  startParkServices()
 }, { immediate: true })
-
-onBeforeUnmount(stopParkServices)
 </script>
 
 <template>
@@ -93,22 +74,22 @@ onBeforeUnmount(stopParkServices)
         <GroupRightOverview />
       </div>
 
-      <div v-else :key="`park-${activePark?.id ?? 'unknown'}-${store.activeNav}`"
-        class="dashboard-grid" :class="{ 'security-mode': store.activeNav === 'security' }">
-        <SecurityLeft v-if="store.activeNav === 'security'" />
-        <VisitorLeft v-else-if="store.activeNav === 'people'" />
-        <LeftMonitor v-else />
-        <section class="center-column" :class="{ 'security-center': store.activeNav === 'security' }">
-          <MetricStrip />
+      <div v-else :key="`park-${activePark?.id ?? 'unknown'}`"
+        class="dashboard-grid" :class="{ 'enterprise-overview-grid': store.activeNav === 'overview' }">
+        <EnterpriseBusinessAnalysis v-if="store.activeNav === 'overview'" />
+        <FactoryPanel v-else side="left" />
+        <section class="center-column">
+          <EnterpriseMetrics v-if="store.activeNav === 'overview'" />
+          <MetricStrip v-else />
           <CenterScene />
-          <SecurityWorkflowDock v-if="store.activeNav === 'security'" />
-          <VisitorTimelineDock v-else-if="store.activeNav === 'people'" />
-          <BottomDock v-else />
+          <EnterpriseActivity v-if="store.activeNav === 'overview'" />
+          <FactoryDetailDock v-else />
         </section>
-        <SecurityRight v-if="store.activeNav === 'security'" />
-        <VisitorRight v-else-if="store.activeNav === 'people'" />
-        <RightOperations v-else />
+        <EnterpriseProductionSummary v-if="store.activeNav === 'overview'" />
+        <FactoryPanel v-else side="right" />
       </div>
+      <EnterpriseOrderList />
+      <OrderDetailDialog />
       <div class="footer-glow" />
     </main>
   </ScreenFrame>

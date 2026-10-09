@@ -7,6 +7,7 @@ import VChart from 'vue-echarts'
 
 use([CanvasRenderer, GaugeChart, LineChart, PieChart, GraphicComponent, GridComponent, LegendComponent, TooltipComponent])
 defineProps<{ option: Record<string, unknown> }>()
+const emit = defineEmits<{ select: [event: { name?: string; dataIndex?: number }] }>()
 </script>
 
-<template><VChart class="chart" :option="option" autoresize /></template>
+<template><VChart class="chart" :option="option" autoresize @click="emit('select', $event)" /></template>

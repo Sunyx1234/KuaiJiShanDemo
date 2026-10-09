@@ -33,8 +33,8 @@ async function toggleFullscreen() {
       <span>HUIJISHAN · SHAOXING WINE</span>
     </div>
     <div class="title-block">
-      <h1>会稽山数字孪生总览</h1>
-      <p>HUIJISHAN DIGITAL TWIN CAMPUS</p>
+      <h1>会稽山未来工厂驾驶舱</h1>
+      <p>HUIJISHAN · SALES NETWORK</p>
     </div>
     <div class="weather">
       <span>{{ clock }}</span>

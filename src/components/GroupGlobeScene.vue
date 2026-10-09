@@ -40,16 +40,11 @@ const sales = useSalesStore()
 const orderDetails = useOrdersStore()
 const activeLifecycle = computed(() => orderLifecycles[sales.activeIndex]!)
 const salesDestination = ref<{ left: number; top: number; visible: boolean } | null>(null)
-const salesCardStyle = computed(() => {
-  const point = salesDestination.value
-  const width = canvasHost.value?.clientWidth ?? 1920
-  const height = canvasHost.value?.clientHeight ?? 1080
-  const cardWidth = 340
-  const proposedLeft = (point?.left ?? width / 2) + 34
-  const left = Math.min(width - 440 - cardWidth, Math.max(420, proposedLeft))
-  const top = Math.min(height - 340, Math.max(155, (point?.top ?? height / 2) - 340))
-  return { left: `${left}px`, top: `${top}px`, opacity: sales.opacity, transform: `translateY(${(1 - sales.opacity) * 10}px)` }
-})
+// Keep the card in the southwest of the globe, clear of the China sales arcs.
+const salesCardStyle = computed(() => ({
+  left: '420px', bottom: '92px', opacity: sales.opacity,
+  transform: `translateY(${(1 - sales.opacity) * 10}px)`,
+}))
 const salesArcs: THREE.Mesh<THREE.TubeGeometry, THREE.ShaderMaterial>[] = []
 const salesMarkers: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = []
 const canvasHost = ref<HTMLDivElement | null>(null)
@@ -724,7 +719,7 @@ function initializeScene() {
         controls.update()
       }
       const delta = animationClock.getDelta()
-      if (!document.hidden) sales.tick(Math.min(delta, .1))
+      if (!document.hidden && !orderDetails.selected) sales.tick(Math.min(delta, .1))
       const elapsedSeconds = animationClock.elapsedTime
       updateCloudAnimation(elapsedSeconds)
       updateNetworkAnimation(elapsedSeconds)
@@ -892,11 +887,11 @@ onBeforeUnmount(disposeScene)
     </div>
 
     <div v-if="webglAvailable && salesDestination?.visible" class="sales-city-label" :style="{ left: `${salesDestination.left}px`, top: `${salesDestination.top}px`, opacity: sales.opacity }"><i /><span>{{ sales.activeOrder.city }}<small>订单目的地</small></span></div>
-    <article v-if="!webglAvailable || salesDestination?.visible" class="sales-floating-card" :style="salesCardStyle" aria-label="销售订单详情">
+    <article v-if="!webglAvailable || salesDestination?.visible" class="sales-floating-card" :style="salesCardStyle" aria-label="销售订单详情" @click.stop="orderDetails.open(sales.activeOrder.id)">
       <header><span>SALES ORDER</span><small>{{ sales.activeOrder.status }}</small></header>
       <h3>绍兴 <i>→</i> {{ sales.activeOrder.city }}</h3>
       <div class="sales-floating-amount"><strong>{{ formatSalesAmount(sales.activeOrder.amount) }}<small>万元</small></strong><span>{{ sales.activeOrder.quantity.toLocaleString() }} 箱</span></div>
-      <dl><div><dt>客户</dt><dd>{{ sales.activeOrder.customer }}</dd></div><div><dt>产品</dt><dd>{{ sales.activeOrder.product }}</dd></div><div><dt>订单</dt><dd>{{ sales.activeOrder.id }}</dd></div><div><dt>期望到货</dt><dd>{{ activeLifecycle.expectedArrival.slice(5) }}</dd></div></dl><button class="sales-order-detail-button" @click="orderDetails.open(sales.activeOrder.id)">查看订单生命周期 →</button>
+      <dl><div><dt>客户</dt><dd>{{ sales.activeOrder.customer }}</dd></div><div><dt>产品</dt><dd>{{ sales.activeOrder.product }}</dd></div><div><dt>订单</dt><dd>{{ sales.activeOrder.id }}</dd></div><div><dt>期望到货</dt><dd>{{ activeLifecycle.expectedArrival.slice(5) }}</dd></div></dl><button class="sales-order-detail-button" @click.stop="orderDetails.open(sales.activeOrder.id)">查看订单生命周期 →</button>
       <div class="sales-progress"><i :style="{ width: `${sales.progress * 100}%` }" /></div>
     </article>
     <div class="sales-globe-caption" :style="{ opacity: sales.opacity }"><span>绍兴园区</span><i>→</i><strong>{{ sales.activeOrder.city }}</strong><em>销售订单流向</em></div>

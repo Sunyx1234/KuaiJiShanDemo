@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { useSalesStore } from '../stores/sales'
+import { useOrdersStore } from '../stores/orders'
 import { formatSalesAmount } from '../data/sales'
 const router = useRouter()
 const sales = useSalesStore()
+const orderDetails = useOrdersStore()
+function openOrder(index: number) {
+  const order = sales.orders[index]
+  if (!order) return
+  sales.selectOrder(index)
+  orderDetails.open(order.id)
+}
 </script>
 
 <template>
@@ -15,7 +23,7 @@ const sales = useSalesStore()
       <div class="sales-summary-stats"><div><b>{{ sales.orders.length }}</b><span>目的地市</span></div><div><b>{{ sales.totalQuantity.toLocaleString() }}</b><span>订单总箱数</span></div></div>
       <header class="sales-list-heading"><h3>订单轮播</h3><button @click="sales.playing = !sales.playing">{{ sales.playing ? '暂停轮播' : '继续轮播' }}</button></header>
       <nav class="sales-order-list" aria-label="销售订单">
-        <button v-for="(order, index) in sales.orders" :key="order.id" :class="{ active: sales.activeIndex === index }" :aria-pressed="sales.activeIndex === index" @click="sales.selectOrder(index)">
+        <button v-for="(order, index) in sales.orders" :key="order.id" :class="{ active: sales.activeIndex === index }" :aria-pressed="sales.activeIndex === index" aria-haspopup="dialog" @click="openOrder(index)">
           <span class="sales-order-number">{{ String(index + 1).padStart(2, '0') }}</span><span><b>绍兴 → {{ order.city }}</b><small>{{ order.quantity.toLocaleString() }} 箱 · {{ order.status }}</small></span><strong>{{ formatSalesAmount(order.amount) }}<small>万元</small></strong>
         </button>
       </nav>

@@ -1,0 +1,819 @@
+[
+  {
+    "id": "OD202610120000000085",
+    "customer": "绍兴市千客隆超市有限公司",
+    "city": "绍兴",
+    "province": "浙江省",
+    "latitude": 30.0,
+    "longitude": 120.58,
+    "product": "会稽山五年陈纯正绍兴酒(加五元换购版）",
+    "spec": "500mlX8",
+    "amount": 239056,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "绍兴特渠部",
+    "region": "绍兴战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "绍兴众辉运输有限公司",
+    "transportMode": "第三方物流",
+    "address": "浙江省绍兴市越城区人民东路1426号",
+    "createdAt": "2026-10-12T17:49",
+    "confirmedAt": "2026-10-12T19:41",
+    "releasedAt": "2026-10-13T08:05",
+    "shippedAt": "2026-10-13",
+    "expectedArrival": null,
+    "sourceShippedQuantity": 348,
+    "sourceOrderQuantity": 1348,
+    "demandCodes": [
+      "YH2026101200108"
+    ],
+    "noticeCodes": [
+      "2610130006",
+      "2610130007",
+      "2610130008"
+    ],
+    "dispatchCodes": [
+      "PC202610130002"
+    ],
+    "outboundCodes": [
+      "202610130027",
+      "202610130036"
+    ],
+    "annualSales": 1162140,
+    "annualOrderCount": 500,
+    "productRank": 1,
+    "items": [
+      {
+        "code": "5111005007-21302",
+        "name": "会稽山1743低糖黄酒（黑盖BC联动款）",
+        "spec": "500mlX6",
+        "quantity": 300,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 75600,
+        "paidAmount": 75600
+      },
+      {
+        "code": "50102529212-21802",
+        "name": "会稽山五年陈纯正绍兴酒(加五元换购版）",
+        "spec": "500mlX8",
+        "quantity": 1000,
+        "unit": "箱",
+        "unitCode": "21802",
+        "category": "wine",
+        "amount": 160000,
+        "paidAmount": 160000
+      },
+      {
+        "code": "501011001-22502",
+        "name": "简加饭",
+        "spec": "500ml*12",
+        "quantity": 48,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 3456,
+        "paidAmount": 3456
+      }
+    ]
+  },
+  {
+    "id": "OD202610100000000065",
+    "customer": "绍兴舜联商贸有限公司",
+    "city": "绍兴",
+    "province": "浙江省",
+    "latitude": 30.0,
+    "longitude": 120.58,
+    "product": "简加饭",
+    "spec": "500ml*12",
+    "amount": 209600,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "上虞办事处",
+    "region": "绍兴战区",
+    "division": "会稽山事业部",
+    "warehouse": "大灌酒（酒体）",
+    "carrier": "绍兴新起点物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "浙江省绍兴市上虞区城东工业区石堰路冠珠陶瓷仓库内",
+    "createdAt": "2026-10-10T14:26",
+    "confirmedAt": "2026-10-10T15:12",
+    "releasedAt": "2026-10-10T15:14",
+    "shippedAt": "2026-10-12",
+    "expectedArrival": "2026-10-11",
+    "sourceShippedQuantity": 1120,
+    "sourceOrderQuantity": 2064,
+    "demandCodes": [
+      "YH2026101000074",
+      "YH2026101300037"
+    ],
+    "noticeCodes": [
+      "2610100162",
+      "2610100163",
+      "2610100164",
+      "2610100165",
+      "2610130172",
+      "2610130174"
+    ],
+    "dispatchCodes": [
+      "PC202610100090",
+      "PC202610130079"
+    ],
+    "outboundCodes": [
+      "202610120033",
+      "202610120051",
+      "202610130008",
+      "202610130009"
+    ],
+    "annualSales": 452688,
+    "annualOrderCount": 467,
+    "productRank": 2,
+    "items": [
+      {
+        "code": "50090513",
+        "name": "1200*1200塑料托板",
+        "spec": "1",
+        "quantity": 12,
+        "unit": "个",
+        "unitCode": "104",
+        "category": "packaging",
+        "amount": 3600,
+        "paidAmount": 3600
+      },
+      {
+        "code": "50090516",
+        "name": "1140*1140*160mm塑料托盘",
+        "spec": "1",
+        "quantity": 4,
+        "unit": "个",
+        "unitCode": "104",
+        "category": "packaging",
+        "amount": 1200,
+        "paidAmount": 1200
+      },
+      {
+        "code": "5110315001-21302",
+        "name": "会稽山三年陈绍兴加饭酒",
+        "spec": "1.5LX6",
+        "quantity": 1024,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 131072,
+        "paidAmount": 131072
+      },
+      {
+        "code": "501011001-22502",
+        "name": "简加饭",
+        "spec": "500ml*12",
+        "quantity": 1024,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 73728,
+        "paidAmount": 73728
+      }
+    ]
+  },
+  {
+    "id": "OD202610110000000003",
+    "customer": "浙江雅兴商贸有限公司",
+    "city": "绍兴",
+    "province": "浙江省",
+    "latitude": 30.0,
+    "longitude": 120.58,
+    "product": "三年陈加饭",
+    "spec": "500ml*12",
+    "amount": 22416,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "越城办事处",
+    "region": "绍兴战区",
+    "division": "会稽山事业部",
+    "warehouse": "大灌酒（酒体）",
+    "carrier": "绍兴众辉运输有限公司",
+    "transportMode": "第三方物流",
+    "address": "浙江省绍兴市越城区袍江袍渎路9号",
+    "createdAt": "2026-10-11T09:16",
+    "confirmedAt": "2026-10-11T09:17",
+    "releasedAt": "2026-10-12T08:01",
+    "shippedAt": "2026-10-12",
+    "expectedArrival": "2026-10-12",
+    "sourceShippedQuantity": 56,
+    "sourceOrderQuantity": 218,
+    "demandCodes": [
+      "YH2026101100002"
+    ],
+    "noticeCodes": [
+      "2610120024",
+      "2610120025",
+      "2610120350"
+    ],
+    "dispatchCodes": [
+      "PC202610120018"
+    ],
+    "outboundCodes": [
+      "202610120201",
+      "202610130012"
+    ],
+    "annualSales": 329339,
+    "annualOrderCount": 307,
+    "productRank": 3,
+    "items": [
+      {
+        "code": "50090516",
+        "name": "1140*1140*160mm塑料托盘",
+        "spec": "1",
+        "quantity": 2,
+        "unit": "个",
+        "unitCode": "104",
+        "category": "packaging",
+        "amount": 600,
+        "paidAmount": 600
+      },
+      {
+        "code": "501023049-22502",
+        "name": "三年陈加饭",
+        "spec": "500ml*12",
+        "quantity": 216,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 21816,
+        "paidAmount": 21816
+      }
+    ]
+  },
+  {
+    "id": "OD2026101200037",
+    "customer": "合肥恒顺糖酒有限公司",
+    "city": "合肥",
+    "province": "安徽省",
+    "latitude": 31.82,
+    "longitude": 117.23,
+    "product": "会稽山五年陈纯正绍兴酒",
+    "spec": "500ml*8",
+    "amount": 82400,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "合肥办事处",
+    "region": "安徽战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "杭州达运物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "安徽省合肥市包河区包河工业园延安路329号凯盛科技",
+    "createdAt": "2026-10-12T11:40",
+    "confirmedAt": "2026-10-12T11:41",
+    "releasedAt": "2026-10-12T13:05",
+    "shippedAt": "2026-10-13",
+    "expectedArrival": null,
+    "sourceShippedQuantity": 700,
+    "sourceOrderQuantity": 700,
+    "demandCodes": [
+      "YH2026101200054"
+    ],
+    "noticeCodes": [
+      "2610120244",
+      "2610120245",
+      "2610120246",
+      "2610120247"
+    ],
+    "dispatchCodes": [
+      "PC202610120130"
+    ],
+    "outboundCodes": [
+      "202610130118",
+      "202610130153",
+      "202610130156",
+      "202610130161"
+    ],
+    "annualSales": 194679,
+    "annualOrderCount": 458,
+    "productRank": 4,
+    "items": [
+      {
+        "code": "501011033-22502",
+        "name": "陈年花雕（省外）",
+        "spec": "500ml*12",
+        "quantity": 200,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 14400,
+        "paidAmount": 14400
+      },
+      {
+        "code": "501010285-21302",
+        "name": "会稽山清纯黄酒",
+        "spec": "500mL*6",
+        "quantity": 200,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 12000,
+        "paidAmount": 12000
+      },
+      {
+        "code": "501025292-21802",
+        "name": "会稽山五年陈纯正绍兴酒",
+        "spec": "500ml*8",
+        "quantity": 200,
+        "unit": "箱",
+        "unitCode": "21802",
+        "category": "wine",
+        "amount": 32000,
+        "paidAmount": 32000
+      },
+      {
+        "code": "5110002001-23102",
+        "name": "会稽山1743低糖黄酒（特渠）",
+        "spec": "200mLX24",
+        "quantity": 100,
+        "unit": "箱",
+        "unitCode": "23102",
+        "category": "wine",
+        "amount": 24000,
+        "paidAmount": 24000
+      }
+    ]
+  },
+  {
+    "id": "OD2026090700067",
+    "customer": "合肥楷诺商贸有限公司",
+    "city": "合肥",
+    "province": "安徽省",
+    "latitude": 31.82,
+    "longitude": 117.23,
+    "product": "会稽山1743低糖黄酒",
+    "spec": "500ML*6",
+    "amount": 60040,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "合肥办事处",
+    "region": "安徽战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "杭州达运物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "安徽省合肥市瑶海区龙门岭路与扶疏路交口西北角康城静林湾Z8幢906室",
+    "createdAt": "2026-09-08T13:09",
+    "confirmedAt": "2026-09-08T13:09",
+    "releasedAt": "2026-09-08T13:13",
+    "shippedAt": "2026-09-09",
+    "expectedArrival": "2026-09-09",
+    "sourceShippedQuantity": 905,
+    "sourceOrderQuantity": 935,
+    "demandCodes": [
+      "YH2026090800062"
+    ],
+    "noticeCodes": [
+      "2609080111",
+      "2609080112",
+      "2609080113",
+      "2609080114",
+      "2609080115",
+      "2609080116",
+      "2609080117"
+    ],
+    "dispatchCodes": [
+      "PC202609080056"
+    ],
+    "outboundCodes": [
+      "202609090103",
+      "202609090106",
+      "202609090108",
+      "202609090111",
+      "202609090117",
+      "202609090118"
+    ],
+    "annualSales": 189253,
+    "annualOrderCount": 237,
+    "productRank": 5,
+    "items": [
+      {
+        "code": "501025297-22502",
+        "name": "会稽山三年陈纯正绍兴酒",
+        "spec": "500ml*12",
+        "quantity": 50,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 5050,
+        "paidAmount": 5050
+      },
+      {
+        "code": "501010546-22502",
+        "name": "会稽山特醇花雕酒",
+        "spec": "500ml*12",
+        "quantity": 100,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 7500,
+        "paidAmount": 7500
+      },
+      {
+        "code": "501010285-21302",
+        "name": "会稽山清纯黄酒",
+        "spec": "500mL*6",
+        "quantity": 50,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 3000,
+        "paidAmount": 3000
+      },
+      {
+        "code": "501010309-21302",
+        "name": "会稽山特酿黄酒",
+        "spec": "500ml*6",
+        "quantity": 50,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 2250,
+        "paidAmount": 2250
+      },
+      {
+        "code": "50102549501-21802",
+        "name": "会稽山原香黄酒（省外）",
+        "spec": "500ML*8",
+        "quantity": 150,
+        "unit": "箱",
+        "unitCode": "21802",
+        "category": "wine",
+        "amount": 12600,
+        "paidAmount": 12600
+      },
+      {
+        "code": "50102551003-21302",
+        "name": "会稽山1743低糖黄酒",
+        "spec": "500ML*6",
+        "quantity": 30,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 5400,
+        "paidAmount": 5400
+      },
+      {
+        "code": "501025475-21802",
+        "name": "会稽山淡雅黄酒（流通）",
+        "spec": "500ml*8",
+        "quantity": 505,
+        "unit": "箱",
+        "unitCode": "21802",
+        "category": "wine",
+        "amount": 24240,
+        "paidAmount": 24240
+      }
+    ]
+  },
+  {
+    "id": "OD202608020000000005",
+    "customer": "上海盒马物联网有限公司",
+    "city": "嘉兴",
+    "province": "浙江省",
+    "latitude": 30.75,
+    "longitude": 120.76,
+    "product": "盒马X会稽山三年陈葱姜料酒(谷物酿造料酒)",
+    "spec": "1.25LX6",
+    "amount": 6579.6,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "定制组",
+    "region": "定制组",
+    "division": "特渠部",
+    "warehouse": "立体仓库",
+    "carrier": "自提专用",
+    "transportMode": "自提/内部",
+    "address": "浙江省嘉兴市嘉善县钱塘江路199号嘉地国际物流",
+    "createdAt": "2026-08-02T16:11",
+    "confirmedAt": "2026-08-02T16:13",
+    "releasedAt": "2026-08-03T08:07",
+    "shippedAt": "2026-08-03",
+    "expectedArrival": null,
+    "sourceShippedQuantity": 106,
+    "sourceOrderQuantity": 106,
+    "demandCodes": [
+      "YH2026080200006"
+    ],
+    "noticeCodes": [
+      "9012608030002",
+      "9012608030003",
+      "9012608030004",
+      "9012608030005"
+    ],
+    "dispatchCodes": [
+      "PC202608030005"
+    ],
+    "outboundCodes": [
+      "202608030002",
+      "202608030003",
+      "202608030004",
+      "202608030005"
+    ],
+    "annualSales": 125749,
+    "annualOrderCount": 39,
+    "productRank": 6,
+    "items": [
+      {
+        "code": "5130305001-22502",
+        "name": "三年陈原酿料酒（谷物酿造料酒）",
+        "spec": "500mlX12",
+        "quantity": 29,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 1374.6,
+        "paidAmount": 1374.6
+      },
+      {
+        "code": "5131005001-22502",
+        "name": "盒马X会稽山十年陈厨用花雕(谷物酿造料酒)",
+        "spec": "500mlX12",
+        "quantity": 30,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 3078,
+        "paidAmount": 3078
+      },
+      {
+        "code": "5130305002-22502",
+        "name": "盒马X会稽山三年陈葱姜料酒（谷物酿造料酒）",
+        "spec": "500mlX12",
+        "quantity": 26,
+        "unit": "箱",
+        "unitCode": "22502",
+        "category": "wine",
+        "amount": 1232.4,
+        "paidAmount": 1232.4
+      },
+      {
+        "code": "5130312002-21202",
+        "name": "盒马X会稽山三年陈葱姜料酒(谷物酿造料酒)",
+        "spec": "1.25LX6",
+        "quantity": 21,
+        "unit": "箱",
+        "unitCode": "21202",
+        "category": "wine",
+        "amount": 894.6,
+        "paidAmount": 894.6
+      }
+    ]
+  },
+  {
+    "id": "OD2026101000080",
+    "customer": "马鞍山市怡方商贸有限公司",
+    "city": "马鞍山",
+    "province": "安徽省",
+    "latitude": 31.67,
+    "longitude": 118.51,
+    "product": "会稽山淡雅黄酒（流通）",
+    "spec": "500ml*8",
+    "amount": 24000,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "芜湖办事处",
+    "region": "安徽战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "杭州达运物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "安徽省马鞍山市花山区天宝路和旅游大道交叉口电子产业园411室",
+    "createdAt": "2026-10-12T11:36",
+    "confirmedAt": "2026-10-13T09:28",
+    "releasedAt": "2026-10-13T09:31",
+    "shippedAt": "2026-10-13",
+    "expectedArrival": "2026-10-12",
+    "sourceShippedQuantity": 500,
+    "sourceOrderQuantity": 500,
+    "demandCodes": [
+      "YH2026101300021"
+    ],
+    "noticeCodes": [
+      "2610130061"
+    ],
+    "dispatchCodes": [
+      "PC202610130032"
+    ],
+    "outboundCodes": [
+      "202610130061"
+    ],
+    "annualSales": 108224,
+    "annualOrderCount": 361,
+    "productRank": 7,
+    "items": [
+      {
+        "code": "501025475-21802",
+        "name": "会稽山淡雅黄酒（流通）",
+        "spec": "500ml*8",
+        "quantity": 500,
+        "unit": "箱",
+        "unitCode": "21802",
+        "category": "wine",
+        "amount": 24000,
+        "paidAmount": 24000
+      }
+    ]
+  },
+  {
+    "id": "OD202610060000000038",
+    "customer": "绍兴市上虞三富酒类销售有限公司",
+    "city": "绍兴",
+    "province": "浙江省",
+    "latitude": 30.0,
+    "longitude": 120.58,
+    "product": "22Kg会稽山精酿加饭绍兴酒",
+    "spec": "22kg",
+    "amount": 60000,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "上虞办事处",
+    "region": "绍兴战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "绍兴新起点物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "浙江省绍兴市上虞区开发区越秀路403-405号会稽山专营店",
+    "createdAt": "2026-10-06T20:49",
+    "confirmedAt": "2026-10-06T20:54",
+    "releasedAt": "2026-10-12T09:43",
+    "shippedAt": "2026-10-12",
+    "expectedArrival": null,
+    "sourceShippedQuantity": 500,
+    "sourceOrderQuantity": 500,
+    "demandCodes": [
+      "YH2026100600030"
+    ],
+    "noticeCodes": [
+      "2610120182",
+      "2610120183"
+    ],
+    "dispatchCodes": [
+      "PC202610120087"
+    ],
+    "outboundCodes": [
+      "202610120248",
+      "202610120249"
+    ],
+    "annualSales": 98177,
+    "annualOrderCount": 375,
+    "productRank": 8,
+    "items": [
+      {
+        "code": "502060036-40202",
+        "name": "22Kg会稽山精酿加饭绍兴酒",
+        "spec": "22kg",
+        "quantity": 250,
+        "unit": "坛",
+        "unitCode": "40202",
+        "category": "wine",
+        "amount": 55000,
+        "paidAmount": 55000
+      },
+      {
+        "code": "50090503",
+        "name": "黄酒大坛",
+        "spec": "1",
+        "quantity": 250,
+        "unit": "只",
+        "unitCode": "104",
+        "category": "packaging",
+        "amount": 5000,
+        "paidAmount": 5000
+      }
+    ]
+  },
+  {
+    "id": "OD202610100000000008",
+    "customer": "苏州市金海龙酒业有限公司",
+    "city": "苏州",
+    "province": "江苏省",
+    "latitude": 31.3,
+    "longitude": 120.59,
+    "product": "银国色（流通亚运版）",
+    "spec": "500ML*6",
+    "amount": 291000,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "苏州特渠部",
+    "region": "苏州战区",
+    "division": "会稽山事业部",
+    "warehouse": "立体仓库",
+    "carrier": "绍兴众辉运输有限公司",
+    "transportMode": "第三方物流",
+    "address": "江苏省苏州市姑苏区金门路新元路5号",
+    "createdAt": "2026-10-10T08:23",
+    "confirmedAt": "2026-10-10T08:25",
+    "releasedAt": "2026-10-10T09:00",
+    "shippedAt": "2026-10-13",
+    "expectedArrival": "2026-10-12",
+    "sourceShippedQuantity": 3000,
+    "sourceOrderQuantity": 3000,
+    "demandCodes": [
+      "YH2026101000006"
+    ],
+    "noticeCodes": [
+      "2610100077",
+      "2610100078"
+    ],
+    "dispatchCodes": [
+      "PC202610100033"
+    ],
+    "outboundCodes": [
+      "202610130030",
+      "202610130034"
+    ],
+    "annualSales": 95361,
+    "annualOrderCount": 135,
+    "productRank": 9,
+    "items": [
+      {
+        "code": "50102514602-21302",
+        "name": "银国色（餐饮）",
+        "spec": "500ml*6",
+        "quantity": 500,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 48500,
+        "paidAmount": 48500
+      },
+      {
+        "code": "50102514601-21302",
+        "name": "银国色（流通亚运版）",
+        "spec": "500ML*6",
+        "quantity": 2500,
+        "unit": "箱",
+        "unitCode": "21302",
+        "category": "wine",
+        "amount": 242500,
+        "paidAmount": 242500
+      }
+    ]
+  },
+  {
+    "id": "OD202610120000000027",
+    "customer": "绍兴市上虞区尚华副食品经营部",
+    "city": "绍兴",
+    "province": "浙江省",
+    "latitude": 30.0,
+    "longitude": 120.58,
+    "product": "三年陈糯米陈酿（泥头）",
+    "spec": "10KG*1",
+    "amount": 101520,
+    "orderStatus": "已完成",
+    "orderType": "标准订单",
+    "office": "上虞办事处",
+    "region": "绍兴战区",
+    "division": "会稽山事业部",
+    "warehouse": "大灌酒（酒体）",
+    "carrier": "绍兴新起点物流有限公司",
+    "transportMode": "第三方物流",
+    "address": "浙江省绍兴市上虞区东关街道马山村马山街69号",
+    "createdAt": "2026-10-12T10:17",
+    "confirmedAt": "2026-10-12T10:26",
+    "releasedAt": "2026-10-13T07:43",
+    "shippedAt": "2026-10-13",
+    "expectedArrival": "2026-10-12",
+    "sourceShippedQuantity": 1080,
+    "sourceOrderQuantity": 1080,
+    "demandCodes": [
+      "YH2026101200043",
+      "YH2026101200044"
+    ],
+    "noticeCodes": [
+      "2610130001",
+      "2610130013"
+    ],
+    "dispatchCodes": [
+      "PC202610130001",
+      "PC202610130011"
+    ],
+    "outboundCodes": [
+      "202610130122",
+      "202610130123"
+    ],
+    "annualSales": 93245,
+    "annualOrderCount": 135,
+    "productRank": 10,
+    "items": [
+      {
+        "code": "502020171",
+        "name": "三年陈糯米陈酿（泥头）",
+        "spec": "10KG*1",
+        "quantity": 1080,
+        "unit": "坛",
+        "unitCode": "142",
+        "category": "wine",
+        "amount": 101520,
+        "paidAmount": 101520
+      }
+    ]
+  }
+]

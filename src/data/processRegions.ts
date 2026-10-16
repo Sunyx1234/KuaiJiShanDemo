@@ -1,3 +1,4 @@
+import steamerUrl from '../../experiments/equipment-04-rice-steamer/model/rice-steamer.glb?url'
 // 百分比坐标与园区投影共用坐标轴。工艺—建筑映射待客户校准。
 export interface CampusRegion { id: string; label: string; area: string; x: number; y: number; width: number; depth: number; color: string; detail: string }
 export const processRegions: CampusRegion[] = [
@@ -12,4 +13,9 @@ export const equipmentModelCatalog: Record<string, { name: string; assetUrl: str
   'FJ-03': { name: '3# 发酵罐', assetUrl: null, processIndex: 2 },
   'GT-02': { name: '2# 勾调罐', assetUrl: null, processIndex: 4 },
   'GZ-01': { name: '1# 灌装线', assetUrl: null, processIndex: 5 },
+}
+
+// First integrated process experiment; other stages remain campus views.
+export const processEquipmentModels: Record<number, { name: string; assetUrl: string; deviceCode: string }> = {
+  1: { name: '连续式蒸饭机', assetUrl: steamerUrl, deviceCode: 'EQ-RICE-004' },
 }

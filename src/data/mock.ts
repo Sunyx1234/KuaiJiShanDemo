@@ -4,9 +4,8 @@ import type { AiAlert, AiCategoryStat, AlarmHotspot, AlertItem, CameraArea, Laye
 export const navItems: { key: NavKey | 'more'; label: string; disabled?: boolean }[] = [
   { key: 'overview', label: '企业总览' },
   { key: 'production', label: '生产工艺' },
-  { key: 'quality', label: '质量追溯' },
   { key: 'equipment', label: '设备运维' },
-  { key: 'fulfillment', label: '订单履约' },
+  { key: 'security', label: '安全监控' },
 ]
 
 export const metricsByNav: Record<NavKey, Metric[]> = {

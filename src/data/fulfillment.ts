@@ -1,34 +1,38 @@
-import { salesOrders } from './sales'
-import type { FactoryRecord } from './factory'
+import { salesOrders, summarizeItems, formatQuantities, type QuantityPart } from './sales'
 export const fulfillmentSteps = ['销售订单', '要货确认', '备货放行', '发货出库', '配送送达', '客户签收']
-// 统一展示场景，非脱敏表中的真实统计或实单。拆单/多批次通过数组保留。
+export function formatBusinessTime(at: string | null | undefined) {
+  return at ? at.replace('T', ' ').slice(5, 16) : '—'
+}
 export const orderLifecycles = salesOrders.map((order, index) => {
-  const stage = [2, 2, 2, 5, 4, 3, 5, 4][index]!
-  const batch = index < 3 ? `B-26090${index + 1}` : `B-26080${index + 1}`
-  const createdDate = `2026-10-${String(index + 2).padStart(2, '0')}`
-  const shipped = stage >= 3 ? order.quantity : 0
-  const signed = stage === 5 ? order.quantity : 0
+  // All pages share the approved presentation schedule; original CRM documents stay intact.
+  const { deliveredAt, signedAt } = order
+  const wineItems = order.items.filter(item => item.category === 'wine')
+  const wineUnit = wineItems[0]!.unit
+  // Box shipments retain warehouse quantity; jar/container orders keep separate item units.
+  const shippedQuantities: QuantityPart[] = wineUnit === '箱'
+    ? [{ quantity: order.sourceShippedQuantity, unit: '箱' }]
+    : summarizeItems(order.items)
+  const shipmentCount = order.dispatchCodes.length
+  const shipments = order.dispatchCodes.map((dispatchCode, shipmentIndex) => ({
+    code: `WB${order.shippedAt.slice(0, 10).replaceAll('-', '')}${String(index + 1).padStart(2, '0')}${String(shipmentIndex + 1).padStart(2, '0')}`,
+    dispatchCode, carrier: order.carrier, deliveredAt, signedAt, recipient: order.customer,
+    quantities: shippedQuantities.map(part => ({ ...part, quantity: Math.floor(part.quantity / shipmentCount) + (shipmentIndex < part.quantity % shipmentCount ? 1 : 0) })),
+    status: '已签收',
+  }))
+  const times = [order.createdAt, order.confirmedAt, order.releasedAt, order.shippedAt, deliveredAt, signedAt]
   return {
-    ...order, batch, stage, shipped, signed,
-    customerCode: `DEALER-${String(index + 1).padStart(3, '0')}`, createdAt: `${createdDate}T08:00:00`,
-    shippedAt: stage >= 3 ? `${createdDate}T11:00:00` : null, signedAt: stage === 5 ? `${createdDate}T13:00:00` : null,
-    waybillCode: stage >= 3 ? `WB-${index + 1}` : null, logisticsException: null as null | { label: string; at: string }, unit: '箱', carrier: stage >= 3 ? '华东物流' : '待安排',
-    expectedArrival: `2026-10-${index === 0 ? '20' : index === 1 ? '14' : '12'} 18:00`, attention: index === 2 || index === 4,
-    items: [{ code: `SKU-${index + 1}`, name: order.product, quantity: order.quantity, unit: '箱', amount: order.amount }],
+    ...order, batch: order.id, stage: 5, attention: false,
+    shipped: order.sourceShippedQuantity, signed: order.sourceShippedQuantity, unit: wineUnit,
+    shippedQuantities, signedQuantities: shippedQuantities,
+    shippedText: formatQuantities(shippedQuantities), signedText: formatQuantities(shippedQuantities),
+    deliveredAt, signedAt,
+    waybillCode: shipments.map(shipment => shipment.code).join(' / '), shipments,
+    logisticsException: null as null | { label: string; at: string },
     documents: [
-      { label: '销售订单', codes: [order.id] }, { label: '要货单', codes: [`DH-${index + 1}`] },
-      { label: '发货通知', codes: stage >= 3 ? [`DN-${index + 1}`] : [] },
-      { label: 'ERP发货 / 出库', codes: stage >= 3 ? [`DL-${index + 1}`, `OUT-${index + 1}`] : [] },
-      { label: '运单', codes: stage >= 3 ? [`WB-${index + 1}`] : [] }, { label: '成品批次', codes: [batch] },
+      { label: '销售订单', codes: [order.id] }, { label: '要货单', codes: order.demandCodes },
+      { label: '发货通知', codes: order.noticeCodes }, { label: '排车单', codes: order.dispatchCodes },
+      { label: 'ERP出库单', codes: order.outboundCodes }, { label: '物流运单', codes: shipments.map(shipment => shipment.code) },
     ],
-    timeline: fulfillmentSteps.map((label, step) => ({ label, time: step <= stage ? `${createdDate.slice(5, 7)}月${createdDate.slice(8, 10)}日 ${String(8 + step).padStart(2, '0')}:00` : '', status: step < stage ? '已完成' : step === stage ? order.status : '待执行' })),
+    timeline: fulfillmentSteps.map((label, step) => ({ label, time: formatBusinessTime(times[step]), status: step === 5 ? '已签收' : '已完成' })),
   }
 })
-export const fulfillmentRecords: FactoryRecord[] = orderLifecycles.map(order => ({
-  id: order.id, name: `${order.city} · ${order.customer}`, status: order.status, attention: order.attention,
-  area: '成品出库区', batch: order.batch, device: order.id === 'SO-001' ? 'FJ-03' : order.id === 'SO-002' ? 'GT-02' : order.id === 'SO-003' ? 'GZ-01' : '—',
-  progress: order.stage, x: 61, y: 60,
-  facts: [['客户', order.customer], ['订单金额', `${(order.amount / 10000).toFixed(2)} 万元`], ['期望到货', `${order.expectedArrival.slice(5, 7)}月${order.expectedArrival.slice(8, 10)}日 18:00`], ['关联批次', order.batch]],
-  readings: [['订单数量', `${order.quantity.toLocaleString()} 箱`, '销售单位'], ['已出库', `${order.shipped.toLocaleString()} 箱`, '正向出库'], ['已签收', `${order.signed.toLocaleString()} 箱`, '客户签收']],
-  events: order.timeline.filter(node => node.time).slice(-3).reverse().map(node => [node.time, `${node.label} · ${node.status}`] as [string, string]),
-}))

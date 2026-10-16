@@ -216,9 +216,81 @@ function projectPoint(x: number, y: number) {
   return { x: (point.x + 1) * 50, y: (1 - point.y) * 50 }
 }
 
-defineExpose({ projectPoint })
+let cameraFlight = 0
+let flightMinDistance: number | null = null
+let finishFlight: ((value: boolean) => void) | null = null
+function cancelFlight() {
+  cancelAnimationFrame(cameraFlight)
+  finishFlight?.(false); finishFlight = null
+  if (controls) {
+    controls.enabled = true
+    if (flightMinDistance !== null) controls.minDistance = flightMinDistance
+  }
+  flightMinDistance = null
+}
+function focusRegion(region: CampusRegion, duration = 650, enterBuilding = false, onEnter?: () => void): Promise<boolean> {
+  cancelFlight()
+  if (!camera || !controls || modelBounds.isEmpty()) return Promise.resolve(false)
+  autoRotate.value = false; controls.autoRotate = false; controls.enabled = false
+  viewInteracted = true
+  const size = modelBounds.getSize(new THREE.Vector3())
+  const center = modelBounds.getCenter(new THREE.Vector3())
+  const target = new THREE.Vector3(center.x + (region.x - 50) / 50 * size.x * .68, modelBounds.min.y + 10, center.z + (region.y - 50) / 50 * size.z * .68)
+  const fromPosition = camera.position.clone(), fromTarget = controls.target.clone()
+  const direction = camera.position.clone().sub(controls.target).normalize()
+  const distance = Math.max(controls.minDistance, Math.max(size.x * region.width, size.z * region.depth) / 100 * 1.9)
+  let destination = target.clone().addScaledVector(direction, distance)
+  let approach: THREE.Vector3 | null = null
+  let entryProgress = .82
+  if (enterBuilding && model) {
+    // Aim through an actual facade within the selected process region.
+    const outward = new THREE.Vector3(direction.x, 0, direction.z).normalize()
+    const span = Math.max(size.x, size.z)
+    const origin = target.clone().addScaledVector(outward, span * 2)
+    const ray = new THREE.Raycaster(origin, outward.clone().negate())
+    const buildings: THREE.Mesh[] = []
+    model.traverse(object => { if (object instanceof THREE.Mesh && /^(02|03|04|05|20|25)[ _]/.test(object.name)) buildings.push(object) })
+    const halfWidth = region.width / 100 * size.x * .68
+    const halfDepth = region.depth / 100 * size.z * .68
+    const wall = ray.intersectObjects(buildings, false).find(hit => Math.abs(hit.point.x - target.x) <= halfWidth && Math.abs(hit.point.z - target.z) <= halfDepth)
+    const entry = wall?.point.clone() ?? target.clone().addScaledVector(outward, Math.min(halfWidth, halfDepth) * .7)
+    approach = entry.clone().addScaledVector(outward, 16)
+    destination = entry.clone().addScaledVector(outward, -8)
+    target.copy(destination).addScaledVector(outward, -12)
+    flightMinDistance = controls.minDistance
+    controls.minDistance = .1
+    camera.near = .05; camera.updateProjectionMatrix()
+    // The facade is crossed 2/3 of the way through the final approach.
+    entryProgress = .72 + .28 * (16 / 24)
+  }
+  let entered = false
+  const start = performance.now()
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) duration = 0
+  return new Promise(resolve => {
+    finishFlight = resolve
+    function step(now: number) {
+      if (!camera || !controls || disposed) { cancelFlight(); return }
+      const t = duration ? Math.min(1, (now - start) / duration) : 1
+      const eased = t * t * (3 - 2 * t)
+      if (approach) {
+        if (t < .72) {
+          const p = t / .72
+          camera.position.lerpVectors(fromPosition, approach, p * p * (3 - 2 * p))
+        } else camera.position.lerpVectors(approach, destination, (t - .72) / .28)
+      } else camera.position.lerpVectors(fromPosition, destination, eased)
+      controls.target.lerpVectors(fromTarget, target, eased)
+      controls.update(); requestRender()
+      if (!entered && t >= entryProgress) { entered = true; onEnter?.() }
+      if (t < 1) cameraFlight = requestAnimationFrame(step)
+      else { controls.enabled = true; finishFlight = null; resolve(true) }
+    }
+    cameraFlight = requestAnimationFrame(step)
+  })
+}
+defineExpose({ projectPoint, focusRegion, resetView, cancelFlight })
 
 function resetView() {
+  cancelFlight()
   if (!camera || !controls) return
   viewInteracted = false
   camera.position.copy(homePosition)
@@ -338,6 +410,7 @@ function finishMaterials(object: THREE.Group) {
 }
 
 function dispose() {
+  cancelFlight()
   disposed = true
   cancelAnimationFrame(frame)
   resizeObserver?.disconnect()

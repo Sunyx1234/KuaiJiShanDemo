@@ -1,6 +1,6 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
-import { salesOrders, salesCycleSeconds } from '../data/sales'
+import { salesOrders, salesCycleSeconds, mergeQuantities, formatQuantities } from '../data/sales'
 
 const fadeSeconds = 1.2
 const smooth = (value: number) => { const t = Math.min(1, Math.max(0, value)); return t * t * (3 - 2 * t) }
@@ -19,6 +19,8 @@ export const useSalesStore = defineStore('sales', () => {
   const progress = computed(() => Math.min(1, elapsed.value / salesCycleSeconds))
   const totalAmount = salesOrders.reduce((sum, order) => sum + order.amount, 0)
   const totalQuantity = salesOrders.reduce((sum, order) => sum + order.quantity, 0)
+  const cityCount = new Set(salesOrders.map(order => order.city)).size
+  const totalQuantityText = formatQuantities(mergeQuantities(salesOrders.map(order => order.quantities)))
   function selectOrder(index: number) {
     const next = (index + salesOrders.length) % salesOrders.length
     if (next === activeIndex.value && phase.value !== 'leave') return
@@ -44,5 +46,5 @@ export const useSalesStore = defineStore('sales', () => {
       phase.value = 'enter'
     }
   }
-  return { orders: salesOrders, activeIndex, activeOrder, playing, elapsed, opacity, progress, totalAmount, totalQuantity, selectOrder, tick }
+  return { orders: salesOrders, activeIndex, activeOrder, playing, elapsed, opacity, progress, totalAmount, totalQuantity, cityCount, totalQuantityText, selectOrder, tick }
 })

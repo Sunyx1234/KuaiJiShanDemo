@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, watch } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import ScreenFrame from '../components/ScreenFrame.vue'
 import TopHeader from '../components/TopHeader.vue'
@@ -13,6 +13,10 @@ import CenterScene from '../components/CenterScene.vue'
 import FactoryPanel from '../components/FactoryPanel.vue'
 import OrderDetailDialog from '../components/OrderDetailDialog.vue'
 import FactoryDetailDock from '../components/FactoryDetailDock.vue'
+import SecurityLeft from '../components/SecurityLeft.vue'
+import SecurityRight from '../components/SecurityRight.vue'
+import SecurityWorkflowDock from '../components/SecurityWorkflowDock.vue'
+import { configureSecurityVideoUrls } from '../services/securityVideoUrls'
 import GroupTopHeader from '../components/GroupTopHeader.vue'
 import GroupLeftOverview from '../components/GroupLeftOverview.vue'
 import GroupRightOverview from '../components/GroupRightOverview.vue'
@@ -22,6 +26,7 @@ import { useGroupStore } from '../stores/group'
 const route = useRoute()
 const router = useRouter()
 const GroupGlobeScene = defineAsyncComponent(() => import('../components/GroupGlobeScene.vue'))
+const SecurityScene = defineAsyncComponent(() => import('../components/SecurityScene.vue'))
 const store = useDashboardStore()
 const groupStore = useGroupStore()
 const isGroupLevel = computed(() => route.name === 'group-dashboard')
@@ -34,6 +39,19 @@ const parkHeaderTitle = computed(() => activePark.value
   : '会稽山数字孪生运营中心')
 
 let mountedParkId: string | null = null
+let workOrderPoller = 0
+function stopSecurityServices() {
+  window.clearInterval(workOrderPoller)
+  workOrderPoller = 0
+}
+watch([isGroupLevel, () => store.activeNav], ([groupLevel, nav]) => {
+  stopSecurityServices()
+  if (groupLevel || nav !== 'security') return
+  void configureSecurityVideoUrls()
+  void store.loadWorkOrders()
+  workOrderPoller = window.setInterval(() => void store.loadWorkOrders(), 3000)
+}, { immediate: true })
+onBeforeUnmount(stopSecurityServices)
 
 watch([isGroupLevel, () => route.params.parkId], ([groupLevel]) => {
   if (groupLevel) {
@@ -75,17 +93,21 @@ watch([isGroupLevel, () => route.params.parkId], ([groupLevel]) => {
       </div>
 
       <div v-else :key="`park-${activePark?.id ?? 'unknown'}`"
-        class="dashboard-grid" :class="{ 'enterprise-overview-grid': store.activeNav === 'overview' }">
+        class="dashboard-grid" :class="{ 'enterprise-overview-grid': store.activeNav === 'overview', 'security-mode': store.activeNav === 'security' }">
         <EnterpriseBusinessAnalysis v-if="store.activeNav === 'overview'" />
+        <SecurityLeft v-else-if="store.activeNav === 'security'" />
         <FactoryPanel v-else side="left" />
-        <section class="center-column">
+        <section class="center-column" :class="{ 'security-center': store.activeNav === 'security' }">
           <EnterpriseMetrics v-if="store.activeNav === 'overview'" />
           <MetricStrip v-else />
-          <CenterScene />
+          <SecurityScene v-if="store.activeNav === 'security'" />
+          <CenterScene v-else />
           <EnterpriseActivity v-if="store.activeNav === 'overview'" />
+          <SecurityWorkflowDock v-else-if="store.activeNav === 'security'" />
           <FactoryDetailDock v-else />
         </section>
         <EnterpriseProductionSummary v-if="store.activeNav === 'overview'" />
+        <SecurityRight v-else-if="store.activeNav === 'security'" />
         <FactoryPanel v-else side="right" />
       </div>
       <EnterpriseOrderList />

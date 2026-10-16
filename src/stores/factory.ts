@@ -7,6 +7,8 @@ export const useFactoryStore = defineStore('factory', () => {
   const dashboard = useDashboardStore()
   const selectedIndex = ref(0)
   const selectedProcessIndex = ref(2)
+  const modelRequest = ref(0)
+  function inspectProcess(index: number) { selectProcess(index); modelRequest.value++ }
   const theme = computed<FactoryTheme>(() => dashboard.activeNav in factoryThemes ? dashboard.activeNav as FactoryTheme : 'overview')
   const config = computed(() => factoryThemes[theme.value])
   const selected = computed(() => config.value.records[selectedIndex.value] ?? config.value.records[0]!)
@@ -27,5 +29,5 @@ export const useFactoryStore = defineStore('factory', () => {
     if (selectedIndex.value >= config.value.records.length) selectedIndex.value = 0
     if (next === 'production') selectedProcessIndex.value = selected.value.progress
   })
-  return { theme, config, selected, selectedIndex, selectedProcessIndex, processRegion, select, selectProcess, openTheme }
+  return { modelRequest, inspectProcess, theme, config, selected, selectedIndex, selectedProcessIndex, processRegion, select, selectProcess, openTheme }
 })

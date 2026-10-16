@@ -1,19 +1,16 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import HudPanel from './HudPanel.vue'
-import { productionRecords, equipmentRecords, factoryMetrics } from '../data/factory'
-import { useFactoryStore } from '../stores/factory'
-const factory = useFactoryStore()
-const brewing = productionRecords.filter(record => record.progress === 2)
-const plan = Number(factoryMetrics.production[2]!.value.replaceAll(',', ''))
-const actual = Number(factoryMetrics.production[3]!.value.replaceAll(',', ''))
-const percent = computed(() => plan ? Math.min(100, actual / plan * 100) : 0)
+import { businessReport as report } from '../data/businessReport'
+import { useEnterpriseOverviewStore } from '../stores/enterpriseOverview'
+const overview = useEnterpriseOverviewStore()
+const deliveryRate = computed(() => overview.summary.orders.length ? overview.summary.signedOrders.length / overview.summary.orders.length * 100 : 0)
 </script>
 <template>
-  <aside class="enterprise-production"><HudPanel title="生产概况"><template #actions><span class="enterprise-panel-meta">酿造 · 储存 · 灌装</span></template>
-    <section class="enterprise-brewing"><header><h3>当前酿造批次</h3><button @click="factory.openTheme('production')">查看工艺 ↗</button></header><div class="enterprise-brew-count"><strong>{{ brewing.length }}</strong><span>批次在制</span><i>糖化发酵</i></div><button v-for="record in brewing" :key="record.id" class="enterprise-batch-line" @click="factory.openTheme('production'); factory.select(productionRecords.indexOf(record))"><span>{{ record.batch }}</span><b>{{ record.status }}</b></button></section>
-    <section class="enterprise-storage"><header><h3>原酒储量</h3><span class="enterprise-pending">待接入</span></header><strong>—<small>kL</small></strong><p>原酒库存台账接入后展示</p></section>
-    <section class="enterprise-bottling"><header><h3>灌装产量</h3><button @click="factory.openTheme('production'); factory.select(2)">查看批次 ↗</button></header><strong>{{ actual.toLocaleString() }}<small>瓶</small></strong><div class="enterprise-production-progress"><i :style="{ width: `${percent}%` }" /></div><p>当前批次计划 {{ plan.toLocaleString() }} 瓶 <b>{{ percent.toFixed(0) }}%</b></p></section>
-    <section class="enterprise-equipment"><header><h3>主要设备状态</h3><button @click="factory.openTheme('equipment')">设备运维 ↗</button></header><button v-for="(device, index) in equipmentRecords" :key="device.id" @click="factory.openTheme('equipment'); factory.select(index)"><i :class="{ attention: device.attention }"/><span>{{ device.name }}</span><b :class="{ attention: device.attention }">{{ device.status }}</b></button></section>
+  <aside class="enterprise-production"><HudPanel title="经营与交付"><template #actions><span class="enterprise-panel-meta">{{ report.period }}</span></template>
+    <section class="enterprise-brewing"><header><h3>营业收入</h3><span class="enterprise-growth">同比 +{{ report.revenueGrowth }}%</span></header><div class="enterprise-brew-count"><strong>{{ (report.revenue / 100000000).toFixed(2) }}</strong><span>亿元</span></div><p class="enterprise-finance-note">会稽山绍兴酒股份有限公司</p></section>
+    <section class="enterprise-storage"><header><h3>归母净利润</h3><span class="enterprise-growth">同比 +{{ report.profitGrowth }}%</span></header><strong>{{ (report.netProfit / 100000000).toFixed(2) }}<small>亿元</small></strong></section>
+    <section class="enterprise-bottling"><header><h3>经销商网络</h3><span class="enterprise-panel-meta">报告期末</span></header><strong>{{ report.dealers.toLocaleString() }}<small>家</small></strong><div class="enterprise-dealer-regions"><span v-for="region in report.dealerRegions" :key="region.name">{{ region.name }}<b>{{ region.value }}</b></span></div></section>
+    <section class="enterprise-equipment"><header><h3>本月订单交付</h3><button @click="overview.inspect({ kind: 'orders', title: '订单明细' })">订单明细 ↗</button></header><div class="enterprise-delivery-counts"><span><b>{{ overview.summary.orders.length }}</b>订单</span><span><b>{{ overview.summary.outboundCount }}</b>出库单</span><span><b>{{ overview.summary.signedWaybills }}</b>签收运单</span></div><div class="enterprise-production-progress"><i :style="{ width: `${Math.min(100, deliveryRate)}%` }" /></div><p class="enterprise-finance-note">订单签收率 <b>{{ deliveryRate.toFixed(0) }}%</b></p></section>
   </HudPanel></aside>
 </template>

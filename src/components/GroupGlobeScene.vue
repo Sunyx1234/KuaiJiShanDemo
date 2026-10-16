@@ -45,7 +45,7 @@ const salesCardStyle = computed(() => ({
   left: '420px', bottom: '92px', opacity: sales.opacity,
   transform: `translateY(${(1 - sales.opacity) * 10}px)`,
 }))
-const salesArcs: THREE.Mesh<THREE.TubeGeometry, THREE.ShaderMaterial>[] = []
+const salesArcs: (THREE.Mesh<THREE.TubeGeometry, THREE.ShaderMaterial> | null)[] = []
 const salesMarkers: THREE.Mesh<THREE.SphereGeometry, THREE.MeshBasicMaterial>[] = []
 const canvasHost = ref<HTMLDivElement | null>(null)
 const sceneRoot = ref<HTMLElement | null>(null)
@@ -378,13 +378,17 @@ function createEarth() {
 
     sales.orders.forEach((order, index) => {
       const position = latLngToVector3(order.latitude, order.longitude, 1.54)
-      const arc = createNetworkArc(hubPosition, position, index)
-      salesArcs.push(arc)
-      group.add(arc)
-      const marker = new THREE.Mesh(new THREE.SphereGeometry(.009, 12, 8), new THREE.MeshBasicMaterial({ color: 0x559bb8, transparent: true, opacity: .45 }))
+      const marker = new THREE.Mesh(new THREE.SphereGeometry(.009, 12, 8), new THREE.MeshBasicMaterial({ color: 0xffd995, transparent: true, opacity: 0 }))
       marker.position.copy(position)
       salesMarkers.push(marker)
       group.add(marker)
+      if (order.localDelivery) {
+        salesArcs.push(null)
+        return
+      }
+      const arc = createNetworkArc(hubPosition, position, index)
+      salesArcs.push(arc)
+      group.add(arc)
     })
   }
 
@@ -533,24 +537,22 @@ function updatePinPositions() {
 function updateNetworkAnimation(elapsedSeconds: number) {
   networkFlowTime.value = sales.elapsed
   salesArcs.forEach((arc, index) => {
+    if (!arc) return
     arc.material.uniforms.uActive!.value = index === sales.activeIndex ? sales.opacity : 0
     arc.material.uniforms.uBaseColor!.value.set(index === sales.activeIndex ? 0xc99845 : 0x1d6f9f)
     arc.material.uniforms.uHighlightColor!.value.set(0xffd995)
   })
   salesMarkers.forEach((marker, index) => {
     const active = index === sales.activeIndex
-    marker.material.color.set(active ? 0xffd995 : 0x559bb8)
-    marker.material.opacity = active ? .18 + sales.opacity * .82 : .18
+    marker.material.opacity = active ? sales.opacity : 0
     marker.scale.setScalar(active ? 1.6 + Math.sin(elapsedSeconds * 4) * .3 : 1)
   })
   if (camera && earthGroup && canvasHost.value) {
-    const target = salesMarkers[sales.activeIndex]
-    if (target) {
-      const world = target.getWorldPosition(new THREE.Vector3())
-      const facing = world.clone().normalize().dot(camera.position.clone().normalize()) > .16
-      const point = world.project(camera)
-      salesDestination.value = { left: (point.x + 1) * .5 * canvasHost.value.clientWidth, top: (1 - point.y) * .5 * canvasHost.value.clientHeight, visible: facing && point.z > -1 && point.z < 1 }
-    }
+    const order = sales.activeOrder
+    const world = earthGroup.localToWorld(latLngToVector3(order.latitude, order.longitude, 1.54))
+    const facing = world.clone().normalize().dot(camera.position.clone().normalize()) > .16
+    const point = world.project(camera)
+    salesDestination.value = { left: (point.x + 1) * .5 * canvasHost.value.clientWidth, top: (1 - point.y) * .5 * canvasHost.value.clientHeight, visible: facing && point.z > -1 && point.z < 1 }
   }
 
   store.parks.forEach((park, index) => {
@@ -886,15 +888,15 @@ onBeforeUnmount(disposeScene)
       </article>
     </div>
 
-    <div v-if="webglAvailable && salesDestination?.visible" class="sales-city-label" :style="{ left: `${salesDestination.left}px`, top: `${salesDestination.top}px`, opacity: sales.opacity }"><i /><span>{{ sales.activeOrder.city }}<small>订单目的地</small></span></div>
+    <span v-if="webglAvailable && salesDestination?.visible" class="sales-destination-label" :class="{ 'sales-destination-label--local': sales.activeOrder.localDelivery }" :style="{ left: `${salesDestination.left}px`, top: `${salesDestination.top}px`, opacity: sales.opacity }">{{ sales.activeOrder.destinationLabel }}</span>
     <article v-if="!webglAvailable || salesDestination?.visible" class="sales-floating-card" :style="salesCardStyle" aria-label="销售订单详情" @click.stop="orderDetails.open(sales.activeOrder.id)">
       <header><span>SALES ORDER</span><small>{{ sales.activeOrder.status }}</small></header>
-      <h3>绍兴 <i>→</i> {{ sales.activeOrder.city }}</h3>
-      <div class="sales-floating-amount"><strong>{{ formatSalesAmount(sales.activeOrder.amount) }}<small>万元</small></strong><span>{{ sales.activeOrder.quantity.toLocaleString() }} 箱</span></div>
-      <dl><div><dt>客户</dt><dd>{{ sales.activeOrder.customer }}</dd></div><div><dt>产品</dt><dd>{{ sales.activeOrder.product }}</dd></div><div><dt>订单</dt><dd>{{ sales.activeOrder.id }}</dd></div><div><dt>期望到货</dt><dd>{{ activeLifecycle.expectedArrival.slice(5) }}</dd></div></dl><button class="sales-order-detail-button" @click.stop="orderDetails.open(sales.activeOrder.id)">查看订单生命周期 →</button>
+      <h3>绍兴 <i>→</i> {{ sales.activeOrder.destinationLabel }}</h3>
+      <div class="sales-floating-amount"><strong>{{ formatSalesAmount(sales.activeOrder.amount) }}<small>万元</small></strong><span>{{ sales.activeOrder.quantityText }}</span></div>
+      <dl><div><dt>客户</dt><dd>{{ sales.activeOrder.customer }}</dd></div><div><dt>产品</dt><dd>{{ sales.activeOrder.productLabel }}<small v-if="sales.activeOrder.additionalItemCount">另有 {{ sales.activeOrder.additionalItemCount }} 项商品</small></dd></div><div><dt>订单</dt><dd>{{ sales.activeOrder.id }}</dd></div><div><dt>期望到货</dt><dd>{{ activeLifecycle.expectedArrival.slice(5) }}</dd></div></dl><button class="sales-order-detail-button" @click.stop="orderDetails.open(sales.activeOrder.id)">查看订单生命周期 →</button>
       <div class="sales-progress"><i :style="{ width: `${sales.progress * 100}%` }" /></div>
     </article>
-    <div class="sales-globe-caption" :style="{ opacity: sales.opacity }"><span>绍兴园区</span><i>→</i><strong>{{ sales.activeOrder.city }}</strong><em>销售订单流向</em></div>
+    <div class="sales-globe-caption" :style="{ opacity: sales.opacity }"><span>绍兴园区</span><i>→</i><strong>{{ sales.activeOrder.destinationLabel }}</strong><em>销售订单流向</em></div>
     <Transition name="group-focus">
       <div v-if="transitioningPark && transitionMode === 'navigate'" class="group-globe__transition" aria-live="polite">
         <i><u /></i>

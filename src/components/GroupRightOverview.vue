@@ -39,8 +39,8 @@ function selectShowcase(index: number) {
     <section class="group-showcase-panel group-performance-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>CAMPUS OPERATIONS</span>
-          <h2>园区态势</h2>
+          <span>BUSINESS OPERATIONS</span>
+          <h2>经营态势</h2>
         </div>
         <div class="group-showcase-tabs" aria-label="经营指标维度切换">
           <button v-for="(topic, index) in store.performanceTopics" :key="topic.key"
@@ -75,8 +75,8 @@ function selectShowcase(index: number) {
     <section class="group-showcase-panel group-achievement-panel">
       <header class="group-showcase-heading">
         <div>
-          <span>CAMPUS DATA</span>
-          <h2>园区运行专题</h2>
+          <span>MARKET PERFORMANCE</span>
+          <h2>销售经营专题</h2>
         </div>
         <div class="group-showcase-tabs" aria-label="成果主题切换">
           <button v-for="(topic, index) in store.showcaseTopics" :key="topic.key"

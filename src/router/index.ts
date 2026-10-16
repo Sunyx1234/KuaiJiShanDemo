@@ -5,6 +5,7 @@ import WorkOrderMobileView from '../views/WorkOrderMobileView.vue'
 export default createRouter({
   history: createWebHashHistory(),
   routes: [
+    { path: '/experiments/steamer', name: 'steamer-experiment', component: () => import('../views/SteamerExperimentView.vue') },
     { path: '/huijishan-model', name: 'huijishan-model-preview', component: () => import('../views/HuijishanModelPreviewView.vue') },
     { path: '/park-model', name: 'park-model-preview', component: () => import('../views/ParkModelPreviewView.vue') },
     { path: '/', name: 'group-dashboard', component: DashboardView },

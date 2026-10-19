@@ -1,0 +1,574 @@
+{
+  "version": "0.2.0",
+  "units": "meters",
+  "order": [
+    "LOADER",
+    "INSPECTOR",
+    "FILLER",
+    "STERILIZER",
+    "CAPPER",
+    "PACKER"
+  ],
+  "equipment": [
+    {
+      "id": "EQ_BOT_001_LOADER",
+      "source": "灌装线-上料机.blend",
+      "translation_m": [
+        0,
+        0,
+        0
+      ],
+      "rotation_z_degrees": -90
+    },
+    {
+      "id": "EQ_BOT_005_INSPECTOR",
+      "source": "酒瓶质检设备.blend",
+      "translation_m": [
+        10.81,
+        0,
+        0
+      ],
+      "rotation_z_degrees": 0
+    },
+    {
+      "id": "EQ_BOT_002_ROTARY_FILLER",
+      "source": "灌装线-环形灌装机.blend",
+      "translation_m": [
+        17.33,
+        0.35,
+        0
+      ],
+      "rotation_z_degrees": 0
+    },
+    {
+      "id": "EQ_BOT_006_STERILIZER",
+      "source": "高温杀菌设备.blend",
+      "translation_m": [
+        28.35,
+        0,
+        0
+      ],
+      "rotation_z_degrees": 0
+    },
+    {
+      "id": "EQ_BOT_007_CAPPER",
+      "source": "旋盖机.blend",
+      "translation_m": [
+        38.55,
+        0.55,
+        0
+      ],
+      "rotation_z_degrees": 0
+    },
+    {
+      "id": "EQ_BOT_008_CASE_PACKER",
+      "source": "装箱机.blend",
+      "translation_m": [
+        48.55,
+        -0.42,
+        0
+      ],
+      "rotation_z_degrees": 0
+    }
+  ],
+  "ports_world_blender": {
+    "LOADER/PORT_CONVEYOR_IN": {
+      "position": [
+        -1.7999999523162842,
+        7.868050033721374e-08,
+        0.335999995470047
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -2.821299744937278e-07
+      ],
+      "width": 1.68,
+      "object": "LOADER__PORT_CONVEYOR_IN"
+    },
+    "LOADER/PORT_CONVEYOR_OUT": {
+      "position": [
+        2.3299999237060547,
+        -1.0184753307385108e-07,
+        1.5499999523162842
+      ],
+      "outward": [
+        1.0,
+        -1.9470721213110664e-07,
+        -3.1391647326017846e-07
+      ],
+      "width": 1.49,
+      "object": "LOADER__PORT_CONVEYOR_OUT"
+    },
+    "LOADER/PORT_AIR_IN": {
+      "position": [
+        0.5499999523162842,
+        -1.309999942779541,
+        0.41999998688697815
+      ],
+      "outward": [
+        1.0,
+        -1.9470721213110664e-07,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "LOADER__PORT_AIR_IN"
+    },
+    "INSPECTOR/PORT_CONVEYOR_IN": {
+      "position": [
+        8.329999923706055,
+        0.0,
+        0.949999988079071
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.28,
+      "object": "INSPECTOR__PORT_CONVEYOR_IN"
+    },
+    "INSPECTOR/PORT_CONVEYOR_OUT": {
+      "position": [
+        12.710000038146973,
+        0.0,
+        0.949999988079071
+      ],
+      "outward": [
+        1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.28,
+      "object": "INSPECTOR__PORT_CONVEYOR_OUT"
+    },
+    "INSPECTOR/PORT_AIR_IN": {
+      "position": [
+        10.930000305175781,
+        0.6299999952316284,
+        0.4000000059604645
+      ],
+      "outward": [
+        1.5099583094979607e-07,
+        1.0,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "INSPECTOR__PORT_AIR_IN"
+    },
+    "FILLER/PORT_CONVEYOR_IN": {
+      "position": [
+        15.710000038146973,
+        0.0,
+        1.1619999408721924
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.18,
+      "object": "FILLER__PORT_CONVEYOR_IN"
+    },
+    "FILLER/PORT_CONVEYOR_OUT": {
+      "position": [
+        18.950000762939453,
+        0.0,
+        1.1619999408721924
+      ],
+      "outward": [
+        1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.18,
+      "object": "FILLER__PORT_CONVEYOR_OUT"
+    },
+    "FILLER/PORT_PRODUCT_IN": {
+      "position": [
+        17.700000762939453,
+        1.2100000381469727,
+        1.0549999475479126
+      ],
+      "outward": [
+        0.0,
+        -1.5099580252808664e-07,
+        -1.0
+      ],
+      "width": null,
+      "object": "FILLER__PORT_PRODUCT_IN"
+    },
+    "FILLER/PORT_CIP_OUT": {
+      "position": [
+        16.8799991607666,
+        1.540000081062317,
+        0.6299999952316284
+      ],
+      "outward": [
+        1.5099583094979607e-07,
+        1.0,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "FILLER__PORT_CIP_OUT"
+    },
+    "FILLER/PORT_AIR_IN": {
+      "position": [
+        18.729999542236328,
+        1.5225000381469727,
+        0.5699999928474426
+      ],
+      "outward": [
+        1.5099583094979607e-07,
+        1.0,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "FILLER__PORT_AIR_IN"
+    },
+    "STERILIZER/PORT_STEAM_IN": {
+      "position": [
+        24.950000762939453,
+        -0.8899999856948853,
+        1.1699999570846558
+      ],
+      "outward": [
+        0.0,
+        -1.0,
+        -2.821299744937278e-07
+      ],
+      "width": null,
+      "object": "STERILIZER__PORT_STEAM_IN"
+    },
+    "STERILIZER/PORT_COOLING_WATER_IN": {
+      "position": [
+        34.25,
+        -0.8899999856948853,
+        1.1699999570846558
+      ],
+      "outward": [
+        0.0,
+        -1.0,
+        -2.821299744937278e-07
+      ],
+      "width": null,
+      "object": "STERILIZER__PORT_COOLING_WATER_IN"
+    },
+    "STERILIZER/PORT_DRAIN_OUT": {
+      "position": [
+        25.850000381469727,
+        -0.8899999856948853,
+        0.38999998569488525
+      ],
+      "outward": [
+        0.0,
+        -1.0,
+        -2.821299744937278e-07
+      ],
+      "width": null,
+      "object": "STERILIZER__PORT_DRAIN_OUT"
+    },
+    "STERILIZER/PORT_EXHAUST_OUT": {
+      "position": [
+        32.70000076293945,
+        0.23000000417232513,
+        2.5999999046325684
+      ],
+      "outward": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "width": null,
+      "object": "STERILIZER__PORT_EXHAUST_OUT"
+    },
+    "STERILIZER/PORT_CONVEYOR_IN": {
+      "position": [
+        21.950000762939453,
+        0.0,
+        0.8999999761581421
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.72,
+      "object": "STERILIZER__PORT_CONVEYOR_IN"
+    },
+    "STERILIZER/PORT_CONVEYOR_OUT": {
+      "position": [
+        34.75,
+        0.0,
+        0.8999999761581421
+      ],
+      "outward": [
+        1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.72,
+      "object": "STERILIZER__PORT_CONVEYOR_OUT"
+    },
+    "CAPPER/PORT_CONVEYOR_IN": {
+      "position": [
+        37.25,
+        0.0,
+        1.0199999809265137
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.26,
+      "object": "CAPPER__PORT_CONVEYOR_IN"
+    },
+    "CAPPER/PORT_CONVEYOR_OUT": {
+      "position": [
+        39.849998474121094,
+        0.0,
+        1.0199999809265137
+      ],
+      "outward": [
+        1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.26,
+      "object": "CAPPER__PORT_CONVEYOR_OUT"
+    },
+    "CAPPER/PORT_AIR_IN": {
+      "position": [
+        37.80999755859375,
+        1.4500000476837158,
+        0.5600000023841858
+      ],
+      "outward": [
+        1.5099583094979607e-07,
+        1.0,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "CAPPER__PORT_AIR_IN"
+    },
+    "PACKER/PORT_CONVEYOR_IN": {
+      "position": [
+        42.849998474121094,
+        0.0,
+        0.7599999904632568
+      ],
+      "outward": [
+        -1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.6,
+      "object": "PACKER__PORT_CONVEYOR_IN"
+    },
+    "PACKER/PORT_CONVEYOR_OUT": {
+      "position": [
+        54.25,
+        -0.7599999904632568,
+        0.7599999904632568
+      ],
+      "outward": [
+        1.0,
+        4.371138828673793e-08,
+        -4.371138828673793e-08
+      ],
+      "width": 0.64,
+      "object": "PACKER__PORT_CONVEYOR_OUT"
+    },
+    "PACKER/PORT_AIR_IN": {
+      "position": [
+        43.82999801635742,
+        0.5850000381469727,
+        0.5899999737739563
+      ],
+      "outward": [
+        1.5099583094979607e-07,
+        1.0,
+        -3.1391647326017846e-07
+      ],
+      "width": null,
+      "object": "PACKER__PORT_AIR_IN"
+    }
+  },
+  "connections": [
+    {
+      "id": "CV_01_Accumulation_Descent",
+      "from": "LOADER/PORT_CONVEYOR_OUT",
+      "to": "INSPECTOR/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          2.33,
+          1.55,
+          1.49
+        ],
+        [
+          4.33,
+          1.55,
+          0.28
+        ],
+        [
+          4.63,
+          1.55,
+          0.28
+        ],
+        [
+          8.03,
+          0.95,
+          0.28
+        ],
+        [
+          8.33,
+          0.95,
+          0.28
+        ]
+      ],
+      "start_error_m": 1.0184753130082517e-07,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 10.00797980144134
+    },
+    {
+      "id": "CV_02_Inspection_To_Filling",
+      "from": "INSPECTOR/PORT_CONVEYOR_OUT",
+      "to": "FILLER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          12.71,
+          0.95,
+          0.28
+        ],
+        [
+          13.01,
+          0.95,
+          0.28
+        ],
+        [
+          15.41,
+          1.162,
+          0.18
+        ],
+        [
+          15.71,
+          1.162,
+          0.18
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 5.048024859659977
+    },
+    {
+      "id": "CV_04_Filling_To_Sterilization",
+      "from": "FILLER/PORT_CONVEYOR_OUT",
+      "to": "STERILIZER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          18.95,
+          1.162,
+          0.18
+        ],
+        [
+          19.25,
+          1.162,
+          0.18
+        ],
+        [
+          21.65,
+          0.9,
+          0.72
+        ],
+        [
+          21.95,
+          0.9,
+          0.72
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 6.230118569666841
+    },
+    {
+      "id": "CV_05_Sterilization_To_Capping",
+      "from": "STERILIZER/PORT_CONVEYOR_OUT",
+      "to": "CAPPER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          34.75,
+          0.9,
+          0.72
+        ],
+        [
+          35.05,
+          0.9,
+          0.72
+        ],
+        [
+          36.95,
+          1.02,
+          0.26
+        ],
+        [
+          37.25,
+          1.02,
+          0.26
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 3.613880752003633
+    },
+    {
+      "id": "CV_06_Capping_To_Packing",
+      "from": "CAPPER/PORT_CONVEYOR_OUT",
+      "to": "PACKER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          39.85,
+          1.02,
+          0.26
+        ],
+        [
+          40.15,
+          1.02,
+          0.26
+        ],
+        [
+          42.55,
+          0.76,
+          0.6
+        ],
+        [
+          42.85,
+          0.76,
+          0.6
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 6.182930165948264
+    }
+  ],
+  "bounds_m": {
+    "min": [
+      -1.7975000143051147,
+      -1.5614999532699585,
+      0.0
+    ],
+    "max": [
+      54.25,
+      3.129999876022339,
+      3.2100000381469727
+    ]
+  },
+  "static": true,
+  "limitations": [
+    "Conceptual wide-to-single-file merge, not validated singulation machinery.",
+    "Conveyor slopes and bottle stability require engineering validation.",
+    "Device dimensions remain inferred; standalone source files unchanged.",
+    "Product, CIP and air connections reserved; utility networks not routed."
+  ]
+}

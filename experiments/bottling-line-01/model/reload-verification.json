@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "checks": {
+    "six_equipment_roots": true,
+    "five_interequipment_connections": true,
+    "metric_scale_one": true,
+    "static_scene": true,
+    "no_external_libraries": true,
+    "no_reservation_mesh_exported": true,
+    "actual_belt_endpoints": true,
+    "sterilizer_internal_belt": true,
+    "packer_bridges_present": true,
+    "glb_valid": true,
+    "glb_static_no_studio": true,
+    "glb_ports": true,
+    "six_sources_unchanged": true
+  },
+  "glb_nodes": 6157,
+  "glb_bytes": 17279948,
+  "scope": "Structure, actual belt endpoint and port transform validation; no full engineering collision verification."
+}

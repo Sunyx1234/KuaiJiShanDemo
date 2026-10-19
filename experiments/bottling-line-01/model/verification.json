@@ -1,0 +1,255 @@
+{
+  "passed": true,
+  "checks": {
+    "source_files_unchanged": true,
+    "all_connections_match": true,
+    "six_equipment_roots": true,
+    "metric_scale_1": true,
+    "static_equipment": true
+  },
+  "sources_sha256_before": {
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/clearance-verification.json": "d42148f48246e265a24c56be718a5e706a7742117d5e874d8eee818dde7a1f2c",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/render.log": "fcd91139b523deb62c709c080d6c9135e9ce97deb7b902487013db1921e64998",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/.DS_Store": "5de6b397e608765b146dd9c4b9de50e98a2851b7edab46d54e0b40f0f38c1035",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/灌装线-上料机.blend1": "92ecd6eaa624fecc0da07387572fff154785014ad2f4c685a344a2f6263e899d",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/asset-manifest.json": "d007cfd513df80f3fa84c50f8a1fde42dbe187bf7497fce20b9929e92b3b5e85",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/bottling-loader.glb": "8dab4ed5a05a9c93a5d3095b93f0c28a013d9fbcedc7f926c2acf3d5f4cbcec3",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/export.log": "10d161e11ec610994a730a405a7a58ff6bf09e6bf81d07329d2671fab36e668f",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/animation-verification.json": "83594fc67fd118de166b2095f07e0344864e5e0d64663ef71f3e5f9921314524",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/clearance.log": "1e17b12d9afa62b008b0c522b51f03070a382edd00b27395cab4ccaba4913ff1",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/灌装线-上料机.blend": "e5a6720c99d545c757c8f6a539e31ab04f895f33e266565a10049d8e34f25562",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/verification.json": "57c5e5a07eee85256655c520b0d84a467c1b62502f59f8e2dd1e49028bbffee3",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/build.log": "a6780f76e952f9fc41c29ceb6724e2f4261265c752b08ee7e82b353aa81ba979",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/酒瓶质检设备.blend": "2ad98f383527a4fb754733450999bd55cad354c789292fc4f0c08fe681dd1526",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/bottle-inspector.glb": "1de6bfceffa4ea88ebefc7c58cf37ff41c52d9c5f424938329214dbd14f02c41",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/酒瓶质检设备.blend1": "ed5d848967d931be8ff34ae8378912250095f00d536866cdfd7391f427436948",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/asset-manifest.json": "0154e1dca356a74322e61ee48871b0c0d5a8a8ff2b49f54eadf7048a6878ea93",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/verification.json": "13c83f964194b53777b5b66c9a729acfe13b6b28ce8f8b0625c20b49b1325053",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/灌装线-环形灌装机.blend1": "2af207846e21e812ab6cd2e0c8fc69346bc5f0b0c1f747c18a7b899db6b93538",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/灌装线-环形灌装机.blend": "ede1187b8d6f7da3c4152f74412ef1738d5b8c29eee34c2ce23c1d73f5405951",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/asset-manifest.json": "860675ff9dde5fc88b2229a9667aba3d0b01a83c0434a853b05b870e6380187e",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/bottling-rotary-filler.glb": "61f7b1578b3e773814aeafdfc9bb6091a2057a55b0fd5059b4362cef7f32aaab",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/verification.json": "989720cc012b29a815f5971248872075b9e33c380e25af49b184e7373592d6b8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/asset-manifest.json": "d7dd7e998005486e174864858010d85bdf82e0b749241c0dcfcc37004069dcf7",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/verification.json": "0eadff9778a5f062a131bf025b26841973ae0cc9e99749595f7b343c5e5adbb6",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/高温杀菌设备.blend1": "32f58f709cfb228c432900da2f0d3f174afecd4d62c7d872944daa9a57177da1",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/tunnel-sterilizer.glb": "44fe869657172cafed8016059d5f927a5c1678074e2274e03cbda8463ef33013",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/高温杀菌设备.blend": "6dfabc49c8a5930ce95d44939882402320c745afbf33c891f74ede0830046af2",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/旋盖机.blend": "bae38e51ec6478b6204fa106cfbc0de76fa217e03fde051387734b232e6b06b8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/asset-manifest.json": "6b4d13feac073f26d027dc2cd0397b73f38b28863e2a38f84c1b180794ca1cb5",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/verification.json": "655cd382cdcc8551ea554a261dbf64a5d03004a2640128e730e43cbf2e433a2e",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/旋盖机.blend1": "b79d005dd3103ed5402cfe42b36f7ca42b4d2712fbdc6b401007b55ca08b7860",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/rotary-capper.glb": "3065e5ffb11f65f7937c26a0c5aeb5b767439f7a0389fa126a7622d4da722ea8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/asset-manifest.json": "c7cd22961038b0349ba66ea60b1fb72b3515bc48b3de27a50bd18f6886b213fc",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/case-packer.glb": "bbfa76818cafc0fa6ffc2d731e18f8b421a1f9748a0235a8da9d991b3dc00aa5",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/装箱机.blend": "e842716c74a920463bfd5f18f6169c40cc7f26e06a9b9d81741e55f64b2730ac",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/装箱机.blend1": "397557cc3df89f10d1315e9d16c9670d6a2d5c24b8628bb19b16409824258047",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/verification.json": "7eb39451bfa99b725012a4b724d913387fbbab58398e5f84c5eb5cc374580d1b",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165"
+  },
+  "sources_sha256_after": {
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/clearance-verification.json": "d42148f48246e265a24c56be718a5e706a7742117d5e874d8eee818dde7a1f2c",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/render.log": "fcd91139b523deb62c709c080d6c9135e9ce97deb7b902487013db1921e64998",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/.DS_Store": "5de6b397e608765b146dd9c4b9de50e98a2851b7edab46d54e0b40f0f38c1035",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/灌装线-上料机.blend1": "92ecd6eaa624fecc0da07387572fff154785014ad2f4c685a344a2f6263e899d",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/asset-manifest.json": "d007cfd513df80f3fa84c50f8a1fde42dbe187bf7497fce20b9929e92b3b5e85",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/bottling-loader.glb": "8dab4ed5a05a9c93a5d3095b93f0c28a013d9fbcedc7f926c2acf3d5f4cbcec3",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/export.log": "10d161e11ec610994a730a405a7a58ff6bf09e6bf81d07329d2671fab36e668f",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/animation-verification.json": "83594fc67fd118de166b2095f07e0344864e5e0d64663ef71f3e5f9921314524",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/clearance.log": "1e17b12d9afa62b008b0c522b51f03070a382edd00b27395cab4ccaba4913ff1",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/灌装线-上料机.blend": "e5a6720c99d545c757c8f6a539e31ab04f895f33e266565a10049d8e34f25562",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/verification.json": "57c5e5a07eee85256655c520b0d84a467c1b62502f59f8e2dd1e49028bbffee3",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-01-loader/model/build.log": "a6780f76e952f9fc41c29ceb6724e2f4261265c752b08ee7e82b353aa81ba979",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/酒瓶质检设备.blend": "2ad98f383527a4fb754733450999bd55cad354c789292fc4f0c08fe681dd1526",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/bottle-inspector.glb": "1de6bfceffa4ea88ebefc7c58cf37ff41c52d9c5f424938329214dbd14f02c41",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/酒瓶质检设备.blend1": "ed5d848967d931be8ff34ae8378912250095f00d536866cdfd7391f427436948",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/asset-manifest.json": "0154e1dca356a74322e61ee48871b0c0d5a8a8ff2b49f54eadf7048a6878ea93",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/verification.json": "13c83f964194b53777b5b66c9a729acfe13b6b28ce8f8b0625c20b49b1325053",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-05-bottle-inspector/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/灌装线-环形灌装机.blend1": "2af207846e21e812ab6cd2e0c8fc69346bc5f0b0c1f747c18a7b899db6b93538",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/灌装线-环形灌装机.blend": "ede1187b8d6f7da3c4152f74412ef1738d5b8c29eee34c2ce23c1d73f5405951",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/asset-manifest.json": "860675ff9dde5fc88b2229a9667aba3d0b01a83c0434a853b05b870e6380187e",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/bottling-rotary-filler.glb": "61f7b1578b3e773814aeafdfc9bb6091a2057a55b0fd5059b4362cef7f32aaab",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/verification.json": "989720cc012b29a815f5971248872075b9e33c380e25af49b184e7373592d6b8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-02-rotary-filler/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/asset-manifest.json": "d7dd7e998005486e174864858010d85bdf82e0b749241c0dcfcc37004069dcf7",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/verification.json": "0eadff9778a5f062a131bf025b26841973ae0cc9e99749595f7b343c5e5adbb6",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/高温杀菌设备.blend1": "32f58f709cfb228c432900da2f0d3f174afecd4d62c7d872944daa9a57177da1",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/tunnel-sterilizer.glb": "44fe869657172cafed8016059d5f927a5c1678074e2274e03cbda8463ef33013",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-06-sterilizer/model/高温杀菌设备.blend": "6dfabc49c8a5930ce95d44939882402320c745afbf33c891f74ede0830046af2",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/旋盖机.blend": "bae38e51ec6478b6204fa106cfbc0de76fa217e03fde051387734b232e6b06b8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/asset-manifest.json": "6b4d13feac073f26d027dc2cd0397b73f38b28863e2a38f84c1b180794ca1cb5",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/verification.json": "655cd382cdcc8551ea554a261dbf64a5d03004a2640128e730e43cbf2e433a2e",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/旋盖机.blend1": "b79d005dd3103ed5402cfe42b36f7ca42b4d2712fbdc6b401007b55ca08b7860",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-07-capper/model/rotary-capper.glb": "3065e5ffb11f65f7937c26a0c5aeb5b767439f7a0389fa126a7622d4da722ea8",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/asset-manifest.json": "c7cd22961038b0349ba66ea60b1fb72b3515bc48b3de27a50bd18f6886b213fc",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/case-packer.glb": "bbfa76818cafc0fa6ffc2d731e18f8b421a1f9748a0235a8da9d991b3dc00aa5",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/装箱机.blend": "e842716c74a920463bfd5f18f6169c40cc7f26e06a9b9d81741e55f64b2730ac",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/装箱机.blend1": "397557cc3df89f10d1315e9d16c9670d6a2d5c24b8628bb19b16409824258047",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/verification.json": "7eb39451bfa99b725012a4b724d913387fbbab58398e5f84c5eb5cc374580d1b",
+    "/Users/sunyx/vibecoding/会稽山数字孪生/experiments/equipment-08-case-packer/model/loader-preservation.json": "654b315411b787f75c6570dbabccfa23d8c5e4ba3141497b7c3d6cf658bc7165"
+  },
+  "connections": [
+    {
+      "id": "CV_01_Accumulation_Descent",
+      "from": "LOADER/PORT_CONVEYOR_OUT",
+      "to": "INSPECTOR/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          2.33,
+          1.55,
+          1.49
+        ],
+        [
+          4.33,
+          1.55,
+          0.28
+        ],
+        [
+          4.63,
+          1.55,
+          0.28
+        ],
+        [
+          8.03,
+          0.95,
+          0.28
+        ],
+        [
+          8.33,
+          0.95,
+          0.28
+        ]
+      ],
+      "start_error_m": 1.0184753130082517e-07,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 10.00797980144134
+    },
+    {
+      "id": "CV_02_Inspection_To_Filling",
+      "from": "INSPECTOR/PORT_CONVEYOR_OUT",
+      "to": "FILLER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          12.71,
+          0.95,
+          0.28
+        ],
+        [
+          13.01,
+          0.95,
+          0.28
+        ],
+        [
+          15.41,
+          1.162,
+          0.18
+        ],
+        [
+          15.71,
+          1.162,
+          0.18
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 5.048024859659977
+    },
+    {
+      "id": "CV_04_Filling_To_Sterilization",
+      "from": "FILLER/PORT_CONVEYOR_OUT",
+      "to": "STERILIZER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          18.95,
+          1.162,
+          0.18
+        ],
+        [
+          19.25,
+          1.162,
+          0.18
+        ],
+        [
+          21.65,
+          0.9,
+          0.72
+        ],
+        [
+          21.95,
+          0.9,
+          0.72
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 6.230118569666841
+    },
+    {
+      "id": "CV_05_Sterilization_To_Capping",
+      "from": "STERILIZER/PORT_CONVEYOR_OUT",
+      "to": "CAPPER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          34.75,
+          0.9,
+          0.72
+        ],
+        [
+          35.05,
+          0.9,
+          0.72
+        ],
+        [
+          36.95,
+          1.02,
+          0.26
+        ],
+        [
+          37.25,
+          1.02,
+          0.26
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 3.613880752003633
+    },
+    {
+      "id": "CV_06_Capping_To_Packing",
+      "from": "CAPPER/PORT_CONVEYOR_OUT",
+      "to": "PACKER/PORT_CONVEYOR_IN",
+      "profile_x_height_width_m": [
+        [
+          39.85,
+          1.02,
+          0.26
+        ],
+        [
+          40.15,
+          1.02,
+          0.26
+        ],
+        [
+          42.55,
+          0.76,
+          0.6
+        ],
+        [
+          42.85,
+          0.76,
+          0.6
+        ]
+      ],
+      "start_error_m": 0.0,
+      "end_error_m": 0.0,
+      "max_slope_degrees": 6.182930165948264
+    }
+  ]
+}

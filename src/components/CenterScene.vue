@@ -59,6 +59,9 @@ watch(() => factory.modelRequest, () => {
   activeProcess.value = index; phase.value = 'loading'
   loadTimer = window.setTimeout(deviceError, 20000)
 })
+watch(() => factory.deviceFocusRequest, () => {
+  if (phase.value === 'campus' && processEquipmentModels[factory.selectedProcessIndex]) factory.inspectProcess(factory.selectedProcessIndex, true)
+})
 watch(() => factory.theme, returnCampus)
 watch(() => factory.selectedIndex, returnCampus)
 watch(() => factory.selectedProcessIndex, () => { if (phase.value !== 'campus') returnCampus() }, { flush: 'sync' })
@@ -97,12 +100,12 @@ function switchSceneMode(useModel: boolean) {
     <EnterpriseSceneOverlay v-if="factory.theme === 'overview'" :point-style="scenePointStyle" />
     <FactorySceneOverlay v-else-if="phase === 'campus' && !(factory.theme === 'equipment' && equipmentView)" :point-style="scenePointStyle" />
     <div v-if="processModel" class="process-device-layer" :class="{ visible: phase === 'blend' || phase === 'device' }" :inert="phase !== 'device'">
-      <EquipmentModelViewer :key="activeProcess!" :device-code="processModel.deviceCode" :asset-url="processModel.assetUrl" :model-name="processModel.name" @ready="equipmentReady" @error="deviceError" />
-      <div class="factory-scene-heading"><small>HUIJISHAN · EQUIPMENT TWIN</small><h2>{{ processModel.name }}</h2><p>{{ factory.processRegion.label }} / {{ processModel.deviceCode }} · 工段设备示意</p></div>
-      <div class="process-device-caption">两侧保留当前{{ factory.theme === 'equipment' ? '设备档案' : '批次' }}信息 · 本模型为工段示意，尚未绑定实时测点</div>
+      <EquipmentModelViewer :key="`${activeProcess}-${factory.modelRequest}`" :device-code="processModel.deviceCode" :asset-url="processModel.assetUrl" :model-name="processModel.name" :selected-device-id="factory.selectedProcessDeviceId" :focus-request="factory.deviceFocusRequest" @select-device="factory.selectProcessDevice($event, true)" :show-process-metrics="factory.theme === 'production'" @ready="equipmentReady" @error="deviceError" />
+      <div class="factory-scene-heading"><small>HUIJISHAN · EQUIPMENT TWIN</small><h2>{{ processModel.name }}</h2><p>{{ factory.processRegion.label }} / {{ factory.selectedProcessDeviceId || `${factory.processDevices.length} 台设备` }}</p></div>
+
     </div>
     <button v-if="phase !== 'campus'" class="drill-back" @click="returnCampus">← 返回园区</button>
-    <div v-if="phase === 'loading' || phase === 'focusing'" class="drill-status" role="status">{{ phase === 'loading' ? '正在准备设备模型…' : `正在进入${factory.processRegion.area}…` }}<small>工艺与楼宇位置为示意映射</small></div>
+    <div v-if="phase === 'loading' || phase === 'focusing'" class="drill-status" role="status">{{ phase === 'loading' ? '正在准备设备模型…' : `正在进入${factory.processRegion.area}…` }}</div>
     <div v-if="notice" class="drill-notice" role="status">{{ notice }}</div>
   </section>
 </template>

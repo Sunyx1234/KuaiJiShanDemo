@@ -4,6 +4,7 @@ import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch 
 import { useRoute } from 'vue-router'
 import { securityCameraAreas, securityCameras } from '../data/mock'
 import { useDashboardStore } from '../stores/dashboard'
+import { configureSecurityVideoUrls, getSecurityVideoUrl, securityVideoStatus, securityVideoError, usesSignedSecurityVideos } from '../services/securityVideoUrls'
 import { getSavedAdminPin } from '../services/workOrders'
 
 const HuijishanCampusScene = defineAsyncComponent(() => import('./HuijishanCampusScene.vue'))
@@ -35,8 +36,9 @@ const alertImageRef = ref<HTMLElement | null>(null)
 const fullscreenMedia = ref<'video' | 'alert' | null>(null)
 const fallbackFullscreenMedia = ref<'video' | 'alert' | null>(null)
 const videoLoadFailed = ref(false)
-const previewPlaying = ref(true)
-const previewProgress = ref(38)
+const videoRetryCount = ref(0)
+const videoReloadKey = ref(0)
+const activeVideoUrl = computed(() => store.selectedCamera ? getSecurityVideoUrl(store.selectedCamera.id) : '')
 const now = ref(new Date())
 const workflowMode = ref<'detail' | 'dispatch'>('detail')
 const workflowBusy = ref(false)
@@ -99,8 +101,10 @@ watch(() => store.requestedVideoTime, time => {
 })
 watch(() => store.selectedCamera?.id, () => {
   videoLoadFailed.value = false
-  previewPlaying.value = true
+  videoRetryCount.value = 0
+  if (store.selectedCamera) void configureSecurityVideoUrls()
 })
+watch(activeVideoUrl, () => { videoLoadFailed.value = false })
 watch(() => store.selectedAiAlert?.id, () => {
   workflowMode.value = store.selectedAiAlert?.status === '待派单' && !store.selectedWorkOrder ? 'dispatch' : 'detail'
   workflowError.value = ''
@@ -170,18 +174,24 @@ function formatWorkOrderTime(value?: string) {
     month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false,
   }).format(new Date(value)).replaceAll('/', '-')
 }
-const hasPlayableVideo = computed(() => Boolean(store.selectedCamera?.videoUrl) && !videoLoadFailed.value)
-function togglePreview() {
-  previewPlaying.value = !previewPlaying.value
-  if (!videoRef.value) return
-  if (previewPlaying.value) void videoRef.value.play()
-  else videoRef.value.pause()
-}
+const hasPlayableVideo = computed(() => Boolean(activeVideoUrl.value) && !videoLoadFailed.value)
 function syncRequestedVideoTime() {
   if (!videoRef.value) return
   videoRef.value.currentTime = Math.min(store.requestedVideoTime, videoRef.value.duration || store.requestedVideoTime)
 }
-function handleVideoError() {
+async function retryVideo() {
+  videoLoadFailed.value = false
+  videoRetryCount.value = 0
+  if (await configureSecurityVideoUrls({ force: true })) videoReloadKey.value++
+}
+async function handleVideoError() {
+  const cameraId = store.selectedCamera?.id
+  if (usesSignedSecurityVideos && videoRetryCount.value === 0) {
+    videoRetryCount.value++
+    const refreshed = await configureSecurityVideoUrls({ force: true })
+    if (store.selectedCamera?.id !== cameraId) return
+    if (refreshed) { videoReloadKey.value++; return }
+  }
   videoLoadFailed.value = true
 }
 async function toggleMediaFullscreen(target: 'video' | 'alert') {
@@ -344,19 +354,13 @@ async function toggleMediaFullscreen(target: 'video' | 'alert') {
           </header>
           <div ref="videoFrameRef" class="security-video-frame"
             :class="{ 'media-pseudo-fullscreen': fallbackFullscreenMedia === 'video' }">
-            <video v-if="hasPlayableVideo" ref="videoRef" :src="store.selectedCamera.videoUrl"
+            <video v-if="hasPlayableVideo" :key="`${store.selectedCamera.id}-${videoReloadKey}`" ref="videoRef" :src="activeVideoUrl"
               autoplay muted loop playsinline preload="metadata" :poster="`/assets/huijishan-campus-aerial.jpg`"
               @loadedmetadata="syncRequestedVideoTime" @error="handleVideoError" />
-            <div v-else class="security-video-fallback" :class="{ paused: !previewPlaying }"
-              :style="{ backgroundPosition: store.selectedCamera.posterPosition }">
-              <span class="video-grid" /><b>LIVE</b><time>{{ clock }}</time>
-              <i class="tracking-box"><span>AI TRACKING</span></i>
-              <em>{{ store.selectedCamera.videoUrl ? '视频加载失败 · 已切换演示画面' : '本地演示画面 · 视频素材待配置' }}</em>
-            </div>
-            <div v-if="!hasPlayableVideo" class="security-video-controls">
-              <button @click="togglePreview">{{ previewPlaying ? 'Ⅱ' : '▶' }}</button>
-              <input v-model="previewProgress" type="range" min="0" max="100" aria-label="视频进度" />
-              <time>00:{{ String(Math.round(Number(previewProgress) * .36)).padStart(2, '0') }} / 00:36</time>
+            <div v-else class="security-video-unavailable" role="status">
+              <el-icon><component :is="iconMap.VideoCameraFilled" /></el-icon>
+              <p>{{ securityVideoStatus === 'loading' ? '视频连接中…' : securityVideoError || '视频暂不可用' }}</p>
+              <button v-if="securityVideoStatus !== 'loading'" type="button" @click="retryVideo">重新加载</button>
             </div>
             <button class="media-fullscreen-button" :aria-label="fullscreenMedia === 'video' || fallbackFullscreenMedia === 'video' ? '退出视频全屏' : '全屏查看实时视频'"
               @click="toggleMediaFullscreen('video')"><el-icon><component :is="iconMap.FullScreen" /></el-icon></button>
@@ -382,3 +386,7 @@ async function toggleMediaFullscreen(target: 'video' | 'alert') {
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+.security-video-unavailable{height:100%;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#06192c;color:#96b4c9;font-size:12px}.security-video-unavailable>.el-icon{font-size:30px;color:#4a92b9}.security-video-unavailable p{margin:0}.security-video-unavailable button{border:1px solid #39779b;background:#12354b;color:#b9e5f6;padding:6px 14px;cursor:pointer}.security-video-unavailable button:focus-visible{outline:2px solid #79d8e3;outline-offset:2px}
+</style>

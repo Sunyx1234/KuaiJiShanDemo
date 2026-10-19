@@ -1,3 +1,8 @@
+import loaderUrl from '../../experiments/equipment-01-loader/model/bottling-loader.glb?url'
+import sharedTankUrl from '../../experiments/equipment-09-fermenter/model/发酵罐-单罐.glb?url'
+import filterPressUrl from '../../experiments/equipment-03-filter-press/model/plate-frame-filter-press.glb?url'
+import preFermentationUrl from '../../experiments/equipment-09-fermenter/model/发酵罐-八罐整体.glb?url'
+import postFermentationUrl from '../../experiments/equipment-10-post-fermenter/model/后发酵罐-24罐整体.glb?url'
 import bottlingUrl from '../../experiments/bottling-line-01/model/bottling-line.glb?url'
 import steamerUrl from '../../experiments/equipment-04-rice-steamer/model/rice-steamer.glb?url'
 // 百分比坐标与园区投影共用坐标轴。工艺—建筑映射待客户校准。
@@ -11,13 +16,23 @@ export const processRegions: CampusRegion[] = [
   { id: 'pack', label: '灌装入库', area: '灌装与成品区', x: 61, y: 60, width: 17, depth: 13, color: '#87dab2', detail: '灌装、包装批次与成品入库' },
 ]
 export const equipmentModelCatalog: Record<string, { name: string; assetUrl: string | null; processIndex: number }> = {
-  'FJ-03': { name: '3# 发酵罐', assetUrl: null, processIndex: 2 },
+  'FJ-03': { name: '前发酵区 · 8 罐', assetUrl: preFermentationUrl, processIndex: 2 },
+  'EQ-PRS-003': { name: '板框压榨机', assetUrl: filterPressUrl, processIndex: 3 },
   'GT-02': { name: '2# 勾调罐', assetUrl: null, processIndex: 4 },
   'GZ-01': { name: '1# 灌装线', assetUrl: bottlingUrl, processIndex: 5 },
 }
 
+export const fermentationModels = {
+  pre: { name: '前发酵区 · 8 个发酵罐', assetUrl: preFermentationUrl, deviceCode: 'FER-PRE-ARRAY' },
+  post: { name: '后发酵区 · 24 个后发酵罐', assetUrl: postFermentationUrl, deviceCode: 'FER-POST-ARRAY' },
+}
+
 // Reuse assembled assets at their original metric scale.
 export const processEquipmentModels: Record<number, { name: string; assetUrl: string; deviceCode: string }> = {
+  0: { name: '原料输送设备', assetUrl: loaderUrl, deviceCode: 'RAW-CONVEYOR' },
+  4: { name: '储存勾调罐 · 共用罐体模型', assetUrl: sharedTankUrl, deviceCode: 'BLENDING-TANK' },
   1: { name: '连续式蒸饭机', assetUrl: steamerUrl, deviceCode: 'EQ-RICE-004' },
+  2: fermentationModels.pre,
+  3: { name: '板框压榨机', assetUrl: filterPressUrl, deviceCode: 'EQ-PRS-003' },
   5: { name: '灌装产线 · 六机联线', assetUrl: bottlingUrl, deviceCode: 'LINE-BOTTLING-001' },
 }

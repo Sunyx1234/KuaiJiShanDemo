@@ -28,6 +28,7 @@ const autoRotate = ref(false)
 
 let renderer: THREE.WebGLRenderer | null = null
 let composer: EffectComposer | null = null
+let contactShadows: SSAOPass | null = null
 let scene: THREE.Scene | null = null
 let camera: THREE.PerspectiveCamera | null = null
 let controls: OrbitControls | null = null
@@ -44,6 +45,7 @@ let frame = 0
 let disposed = false
 let homePosition = new THREE.Vector3()
 let homeTarget = new THREE.Vector3()
+let homeNear = .1, homeFar = 2000
 let modelBounds = new THREE.Box3()
 let regionHighlight: ReturnType<typeof createCampusRegionHighlight> | null = null
 let lastProjectionEmit = 0
@@ -55,6 +57,17 @@ function render(now: number) {
   controls.update()
   updateLocalLights()
   const transitioning = regionHighlight?.update()
+  // SSAOPass caches camera uniforms at construction/resize, but the drill-through
+  // changes clipping and projection without resizing the canvas.
+  if (contactShadows) {
+    const uniforms = contactShadows.ssaoMaterial.uniforms
+    uniforms.cameraNear!.value = camera.near
+    uniforms.cameraFar!.value = camera.far
+    uniforms.cameraProjectionMatrix!.value.copy(camera.projectionMatrix)
+    uniforms.cameraInverseProjectionMatrix!.value.copy(camera.projectionMatrixInverse)
+    contactShadows.depthRenderMaterial.uniforms.cameraNear!.value = camera.near
+    contactShadows.depthRenderMaterial.uniforms.cameraFar!.value = camera.far
+  }
   composer.render()
   if (now - lastProjectionEmit > 32) {
     lastProjectionEmit = now
@@ -185,6 +198,7 @@ function frameModel(object: THREE.Object3D) {
   homePosition = center.clone().addScaledVector(direction, distance)
   camera.near = Math.max(.01, distance / 1000)
   camera.far = distance * 10
+  homeNear = camera.near; homeFar = camera.far
   camera.updateProjectionMatrix()
   controls.target.copy(homeTarget)
   camera.position.copy(homePosition)
@@ -218,6 +232,7 @@ function projectPoint(x: number, y: number) {
 
 let cameraFlight = 0
 let flightMinDistance: number | null = null
+let flightNear: number | null = null
 let finishFlight: ((value: boolean) => void) | null = null
 function cancelFlight() {
   cancelAnimationFrame(cameraFlight)
@@ -227,6 +242,8 @@ function cancelFlight() {
     if (flightMinDistance !== null) controls.minDistance = flightMinDistance
   }
   flightMinDistance = null
+  if (camera && flightNear !== null) { camera.near = flightNear; camera.updateProjectionMatrix() }
+  flightNear = null
 }
 function focusRegion(region: CampusRegion, duration = 650, enterBuilding = false, onEnter?: () => void): Promise<boolean> {
   cancelFlight()
@@ -259,6 +276,7 @@ function focusRegion(region: CampusRegion, duration = 650, enterBuilding = false
     target.copy(destination).addScaledVector(outward, -12)
     flightMinDistance = controls.minDistance
     controls.minDistance = .1
+    flightNear = camera.near
     camera.near = .05; camera.updateProjectionMatrix()
     // The facade is crossed 2/3 of the way through the final approach.
     entryProgress = .72 + .28 * (16 / 24)
@@ -293,6 +311,7 @@ function resetView() {
   cancelFlight()
   if (!camera || !controls) return
   viewInteracted = false
+  camera.near = homeNear; camera.far = homeFar; camera.updateProjectionMatrix()
   camera.position.copy(homePosition)
   controls.target.copy(homeTarget)
   controls.update()
@@ -481,7 +500,7 @@ onMounted(() => {
     scene.add(fill)
     composer = new EffectComposer(renderer)
     composer.addPass(new RenderPass(scene, camera))
-    const contactShadows = new SSAOPass(scene, camera, 1, 1, 8)
+    contactShadows = new SSAOPass(scene, camera, 1, 1, 8)
     contactShadows.kernelRadius = 1.3
     contactShadows.minDistance = .002
     contactShadows.maxDistance = .045

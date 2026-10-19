@@ -11,6 +11,7 @@ import EnterpriseOrderList from '../components/EnterpriseOrderList.vue'
 import MetricStrip from '../components/MetricStrip.vue'
 import CenterScene from '../components/CenterScene.vue'
 import FactoryPanel from '../components/FactoryPanel.vue'
+import EquipmentOperationDialog from '../components/EquipmentOperationDialog.vue'
 import OrderDetailDialog from '../components/OrderDetailDialog.vue'
 import FactoryDetailDock from '../components/FactoryDetailDock.vue'
 import SecurityLeft from '../components/SecurityLeft.vue'
@@ -112,6 +113,7 @@ watch([isGroupLevel, () => route.params.parkId], ([groupLevel]) => {
       </div>
       <EnterpriseOrderList />
       <OrderDetailDialog />
+      <EquipmentOperationDialog v-if="store.activeNav === 'equipment'" />
       <div class="footer-glow" />
     </main>
   </ScreenFrame>

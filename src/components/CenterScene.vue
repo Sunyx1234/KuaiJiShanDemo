@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useFactoryStore } from '../stores/factory'
 import { useEnterpriseOverviewStore } from '../stores/enterpriseOverview'
 import EnterpriseSceneOverlay from './EnterpriseSceneOverlay.vue'
-import { processEquipmentModels, type CampusRegion } from '../data/processRegions'
+import { processEquipmentModels, fermentationModels, type CampusRegion } from '../data/processRegions'
 import FactorySceneOverlay from './FactorySceneOverlay.vue'
 
 const EquipmentModelViewer = defineAsyncComponent(() => import('./EquipmentModelViewer.vue'))
@@ -13,10 +13,9 @@ const route = useRoute()
 const factory = useFactoryStore()
 const overview = useEnterpriseOverviewStore()
 const highlightRegion = computed(() => factory.theme === 'overview' ? overview.selectedRegion : factory.theme === 'production' || phase.value !== 'campus' ? factory.processRegion : null)
-const equipmentView = ref(false)
 const phase = ref<'campus' | 'loading' | 'focusing' | 'blend' | 'device'>('campus')
 const activeProcess = ref<number | null>(null)
-const processModel = computed(() => activeProcess.value === null ? null : processEquipmentModels[activeProcess.value])
+const processModel = computed(() => activeProcess.value === null ? null : activeProcess.value === 2 ? fermentationModels[factory.fermentationZone] : processEquipmentModels[activeProcess.value])
 const notice = ref('')
 let equipmentPrepared = false
 function campusReady() { modelReady.value = true; if (equipmentPrepared) void revealDevice() }
@@ -25,14 +24,15 @@ let transitionId = 0
 let transitionTimer = 0
 let loadTimer = 0
 const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches
-function returnCampus() {
+function returnCampus(resetOperations = false) {
+  if (resetOperations && factory.theme === 'equipment') factory.returnOperationsCampus()
   transitionId++; clearTimeout(transitionTimer); clearTimeout(loadTimer)
   objSceneRef.value?.cancelFlight(); objSceneRef.value?.resetView()
   equipmentPrepared = false
-  phase.value = 'campus'; activeProcess.value = null; equipmentView.value = false; notice.value = ''
+  phase.value = 'campus'; activeProcess.value = null; notice.value = ''
 }
 async function revealDevice() {
-  if (phase.value !== 'loading' || (isModelMode.value && !modelReady.value)) return
+  if (phase.value !== 'loading' || (factory.theme !== 'equipment' && isModelMode.value && !modelReady.value)) return
   clearTimeout(loadTimer)
   const token = transitionId
   phase.value = 'focusing'
@@ -41,12 +41,12 @@ async function revealDevice() {
     phase.value = 'blend'
     transitionTimer = window.setTimeout(() => { if (token === transitionId) phase.value = 'device' }, reducedMotion() ? 0 : 300)
   }
-  if (isModelMode.value && modelReady.value) await objSceneRef.value?.focusRegion(factory.processRegion, 650, true, blend)
+  if (factory.theme !== 'equipment' && isModelMode.value && modelReady.value) await objSceneRef.value?.focusRegion(factory.processRegion, 650, true, blend)
   if (token !== transitionId) return
   if (phase.value === 'focusing') blend()
 }
 function deviceError() {
-  returnCampus(); notice.value = '设备模型加载失败，请重新点击工艺节点重试。'
+  returnCampus(true); notice.value = '设备模型加载失败，请重新点击工艺节点重试。'
 }
 watch(() => factory.modelRequest, () => {
   returnCampus()
@@ -62,8 +62,8 @@ watch(() => factory.modelRequest, () => {
 watch(() => factory.deviceFocusRequest, () => {
   if (phase.value === 'campus' && processEquipmentModels[factory.selectedProcessIndex]) factory.inspectProcess(factory.selectedProcessIndex, true)
 })
-watch(() => factory.theme, returnCampus)
-watch(() => factory.selectedIndex, returnCampus)
+watch(() => factory.theme, () => returnCampus())
+watch(() => factory.selectedIndex, () => returnCampus())
 watch(() => factory.selectedProcessIndex, () => { if (phase.value !== 'campus') returnCampus() }, { flush: 'sync' })
 onBeforeUnmount(() => { transitionId++; clearTimeout(transitionTimer); clearTimeout(loadTimer); objSceneRef.value?.cancelFlight() })
 const showObjModel = ref(true)
@@ -88,29 +88,31 @@ function switchSceneMode(useModel: boolean) {
 <template>
   <section class="scene" :class="{ 'scene-model-mode': isModelMode, 'drill-active': phase !== 'campus', 'drill-device': phase === 'blend' || phase === 'device' }">
     <div class="scene__vignette" />
-    <HuijishanCampusScene v-if="isModelMode" v-show="!(factory.theme === 'equipment' && equipmentView)" ref="objSceneRef" :class="{ 'campus-faded': phase === 'blend' || phase === 'device' }" compact :highlight-region="highlightRegion"
+    <HuijishanCampusScene v-if="isModelMode" ref="objSceneRef" :class="{ 'campus-faded': phase === 'blend' || phase === 'device' }" compact :highlight-region="highlightRegion"
       @ready="campusReady" @view-change="projectionVersion++" />
     <img v-else src="/assets/huijishan-campus-aerial.jpg" alt="会稽山园区航拍参考图" class="scene__image" />
     <div v-if="supportsObjModel && phase === 'campus'" class="scene-mode-switch" role="group" aria-label="中央场景切换">
       <button type="button" :class="{ active: showObjModel }" :aria-pressed="showObjModel" @click="switchSceneMode(true)">园区三维</button>
       <button type="button" :class="{ active: !showObjModel }" :aria-pressed="!showObjModel" @click="switchSceneMode(false)">园区航拍</button>
     </div>
-    <EquipmentModelViewer v-if="factory.theme === 'equipment' && equipmentView" :device-code="factory.selected.device" />
-    <div v-if="factory.theme === 'equipment' && phase === 'campus'" class="equipment-view-switch"><button :class="{ active: !equipmentView }" @click="equipmentView = false">园区定位</button><button :class="{ active: equipmentView }" @click="equipmentView = true">设备视图</button></div>
+
     <EnterpriseSceneOverlay v-if="factory.theme === 'overview'" :point-style="scenePointStyle" />
-    <FactorySceneOverlay v-else-if="phase === 'campus' && !(factory.theme === 'equipment' && equipmentView)" :point-style="scenePointStyle" />
+    <FactorySceneOverlay v-else-if="phase === 'campus'" :point-style="scenePointStyle" />
     <div v-if="processModel" class="process-device-layer" :class="{ visible: phase === 'blend' || phase === 'device' }" :inert="phase !== 'device'">
-      <EquipmentModelViewer :key="`${activeProcess}-${factory.modelRequest}`" :device-code="processModel.deviceCode" :asset-url="processModel.assetUrl" :model-name="processModel.name" :selected-device-id="factory.selectedProcessDeviceId" :focus-request="factory.deviceFocusRequest" @select-device="factory.selectProcessDevice($event, true)" :show-process-metrics="factory.theme === 'production'" @ready="equipmentReady" @error="deviceError" />
-      <div class="factory-scene-heading"><small>HUIJISHAN · EQUIPMENT TWIN</small><h2>{{ processModel.name }}</h2><p>{{ factory.processRegion.label }} / {{ factory.selectedProcessDeviceId || `${factory.processDevices.length} 台设备` }}</p></div>
+      <EquipmentModelViewer :key="`${activeProcess}-${factory.modelRequest}-${activeProcess === 2 ? factory.fermentationZone : ''}`" :device-code="processModel.deviceCode" :asset-url="processModel.assetUrl" :model-name="processModel.name" :selected-device-id="factory.selectedProcessDeviceId" :focus-request="factory.deviceFocusRequest" @select-device="factory.selectProcessDevice($event, true)" :show-process-metrics="factory.theme === 'production'" :operations-mode="factory.theme === 'equipment'" @ready="equipmentReady" @error="deviceError" />
+      <div v-if="activeProcess === 2" class="fermentation-zone-switch" role="group" aria-label="发酵分区"><button v-for="zone in ([{id: 'pre', label: '前发酵区 · 8 罐'}, {id: 'post', label: '后发酵区 · 24 罐'}] as const)" :key="zone.id" :aria-pressed="factory.fermentationZone === zone.id" :class="{ active: factory.fermentationZone === zone.id }" @click="factory.selectFermentationZone(zone.id)">{{ zone.label }}</button></div>
+      <div class="factory-scene-heading"><small>HUIJISHAN · EQUIPMENT TWIN</small><h2>{{ factory.theme === 'equipment' ? factory.activeDevice?.name ?? processModel.name : processModel.name }}</h2><p>{{ factory.processRegion.label }} / {{ factory.selectedProcessDeviceId || `${factory.processDevices.length} 台设备` }}</p></div>
 
     </div>
-    <button v-if="phase !== 'campus'" class="drill-back" @click="returnCampus">← 返回园区</button>
+    <button v-if="phase !== 'campus'" class="drill-back" @click="returnCampus(true)">← 返回园区</button>
     <div v-if="phase === 'loading' || phase === 'focusing'" class="drill-status" role="status">{{ phase === 'loading' ? '正在准备设备模型…' : `正在进入${factory.processRegion.area}…` }}</div>
     <div v-if="notice" class="drill-notice" role="status">{{ notice }}</div>
   </section>
 </template>
 
 <style scoped>
+.fermentation-zone-switch{position:absolute;top:120px;left:26px;z-index:4;display:flex;gap:6px}.fermentation-zone-switch button{border:1px solid #39779b;background:#061b30ed;color:#97bfd8;padding:8px 12px;font-size:12px;cursor:pointer}.fermentation-zone-switch button.active{border-color:#79d8e3;color:#d2f5ff;background:#174d66}.fermentation-zone-switch button:focus-visible{outline:2px solid #79d8e3;outline-offset:2px}
+
 .scene :deep(.obj-preview){transition:opacity .3s ease,filter .3s ease}.scene :deep(.obj-preview.campus-faded){opacity:0;filter:blur(5px);pointer-events:none}.process-device-layer{position:absolute;inset:0;z-index:3;opacity:0;transform:scale(.93);transition:opacity .3s ease,transform .45s cubic-bezier(.2,.7,.2,1);pointer-events:none}.process-device-layer.visible{opacity:1;transform:scale(1);pointer-events:auto}.process-device-layer .factory-scene-heading{z-index:2;pointer-events:none}.drill-back{position:absolute;z-index:15;right:16px;top:16px;padding:8px 14px;border:1px solid #357ca5;background:#03182deb;color:#b9e4fc;cursor:pointer;font-size:13px}.drill-status,.drill-notice{position:absolute;z-index:14;left:50%;bottom:25px;transform:translateX(-50%);padding:12px 18px;border:1px solid #39779b;background:#061b30eb;color:#bce4f3;font-size:13px;white-space:nowrap}.drill-status small{display:block;color:#7895b4;font-size:10px;margin-top:7px}.process-device-caption{position:absolute;bottom:20px;right:18px;max-width:75%;padding:8px 12px;background:#061b30c9;color:#87aeba;font-size:11px;pointer-events:none}.drill-active :deep(.obj-preview__controls){visibility:hidden}
 @media(prefers-reduced-motion:reduce){.scene :deep(.obj-preview),.process-device-layer{transition:none}}
 </style>

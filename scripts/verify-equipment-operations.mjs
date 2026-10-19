@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict'
+import { createServer } from 'vite'
+const server = await createServer({ configFile: false, cacheDir: 'tmp/equipment-operations-cache', optimizeDeps: { noDiscovery: true, include: [] }, server: { middlewareMode: true, hmr: false, ws: false }, appType: 'custom', ssr: { external: ['vue', 'pinia'] } })
+try {
+  const { createPinia, setActivePinia } = await import('pinia')
+  const { nextTick } = await import('vue')
+  const data = await server.ssrLoadModule('/src/data/equipmentOperations.ts')
+  const { processEquipmentModels } = await server.ssrLoadModule('/src/data/processRegions.ts')
+  const { useFactoryStore } = await server.ssrLoadModule('/src/stores/factory.ts')
+  const { useDashboardStore } = await server.ssrLoadModule('/src/stores/dashboard.ts')
+  const { operationDevices: devices, operationTasks: tasks, maintenanceEvents: events } = data
+  const ids = new Set(devices.map(d => d.id))
+  assert.equal(ids.size, devices.length)
+  for (const device of devices) {
+    assert.ok(processEquipmentModels[device.processIndex], `${device.id}: model mapping`)
+    assert.equal(device.parameters.length, 3)
+    assert.ok(events.some(e => e.deviceId === device.id))
+    if (device.status !== '正常运行') {
+      assert.ok(tasks.some(t => t.deviceId === device.id && t.status !== '已完成'))
+      assert.ok(events.some(e => e.deviceId === device.id && e.type === '异常告警'))
+      assert.ok(device.parameters.some(p => /预警|故障/.test(p[2])))
+    }
+  }
+  for (const item of [...tasks, ...events]) assert.ok(ids.has(item.deviceId))
+  for (const event of events.filter(e => e.taskId)) assert.equal(tasks.find(t => t.id === event.taskId)?.deviceId, event.deviceId)
+  const metrics = Object.fromEntries(data.equipmentMetrics().map(m => [m.label, Number(m.value)]))
+  assert.equal(metrics['设备总数'], metrics['正常运行'] + metrics['异常设备'])
+  assert.equal(metrics['待处理工单'], tasks.filter(t => t.status !== '已完成').length)
+  assert.equal(metrics['待执行保养'], tasks.filter(t => t.type === '定期保养' && t.status !== '已完成').length)
+  setActivePinia(createPinia())
+  const dashboard = useDashboardStore(), factory = useFactoryStore()
+  dashboard.switchNavigation('equipment'); await nextTick()
+  assert.equal(factory.equipmentScope, 'campus')
+  assert.equal(factory.visibleDevices.length, devices.length)
+  for (let process = 0; process < 6; process++) {
+    factory.inspectProcess(process); await nextTick()
+    assert.equal(factory.activeDevice.processIndex, process)
+    assert.ok(factory.visibleDevices.every(d => d.processIndex === process))
+    assert.ok(factory.currentTasks.every(t => t.deviceId === factory.activeDevice.id))
+    assert.ok(factory.currentEvents.every(e => e.deviceId === factory.activeDevice.id))
+  }
+  factory.selectOperationDevice('QF-T03'); await nextTick()
+  assert.equal(factory.activeDevice.status, '预警')
+  const request = factory.modelRequest
+  factory.selectFermentationZone('post'); await nextTick()
+  assert.ok(factory.modelRequest > request)
+  assert.equal(factory.activeDevice.zone, 'post')
+  assert.equal(factory.visibleDevices.length, 24)
+  factory.selectOperationDevice('HF-T02'); await nextTick()
+  assert.ok(factory.serviceOverdue(factory.activeDevice))
+  factory.openOperationDetail('task', tasks.find(t => t.id === 'WX-YZ-T01')); await nextTick()
+  assert.equal(factory.activeDevice.id, 'YZ-T01')
+  assert.equal(factory.detail.item.deviceId, factory.activeDevice.id)
+  factory.openOperationDetail('event', events.find(e => e.id === 'AL-GZ-T03')); await nextTick()
+  assert.equal(factory.activeDevice.id, 'GZ-T03')
+  factory.returnOperationsCampus(); await nextTick()
+  assert.equal(factory.activeDevice, null)
+  assert.equal(factory.detail, null)
+  assert.equal(factory.visibleDevices.length, devices.length)
+  assert.equal(factory.processSummary.reduce((sum, p) => sum + p.total, 0), devices.length)
+  assert.equal(factory.processSummary.reduce((sum, p) => sum + p.abnormal, 0), metrics['异常设备'])
+  dashboard.switchNavigation('production'); await nextTick()
+  factory.inspectProcess(2); await nextTick()
+  assert.equal(factory.selectedProcessDeviceId, '')
+  console.log(`PASS: ${devices.length} devices; ${tasks.length} tasks; ${events.length} records; six model mappings; metrics, cross-process selection, zone switching, details, campus return and production regression.`)
+} finally { await server.close() }

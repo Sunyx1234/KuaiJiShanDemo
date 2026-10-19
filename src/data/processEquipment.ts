@@ -40,46 +40,41 @@ export const processReferences: Record<number, { scope: string; readings: Proces
     { label: '工艺要求 · 净含量', value: '批均值 ≥ 标注量', condition: '单件允许短缺按净含量档位判定；总局令70号第8、9条' },
     { label: '工艺参考 · 杀菌区', value: '82–85 °C', condition: '仅限 CN105523515A 冷灌装后封盖路线；非当前设备设定' },
     { label: '工艺参考 · 杀菌强度', value: '总 PU > 30', condition: '同一专利配套条件；须封盖后杀菌，当前模型顺序待工艺复核' },
-    { label: '设备运行读数', value: '待接入', condition: '温度、净含量与封口数据尚无采集接口' },
-    { label: '生产定额', value: '待核定', condition: '瓶/时、瓶/箱按瓶型、包装规格与产能验收确定' },
+    { label: '包装规格', value: '500 mL × 6 瓶', condition: '瓶装产品与装箱规格' },
+    { label: '计划节拍', value: '200 瓶/min', condition: '整线看板计划；12,000 瓶/h' },
   ], sources: [
     { title: '总局令70号 · 定量包装商品计量监督管理办法', url: 'https://www.samr.gov.cn/zw/zfxxgk/fdzdgknr/fgs/art/2023/art_7ca30c3e1b47458cace623dbaab78389.html' },
     { title: 'CN105523515A · 黄酒冷灌装方法（条件性参考）', url: 'https://patents.google.com/patent/CN105523515A/zh' },
   ] },
 }
 
-export type BottlingMetric = { id: string; label: string; unit: string; target: string; range: string }
-export type BottlingDevice = { id: string; name: string; nodeName: string; task: string; metrics: BottlingMetric[]; record: string }
-// Stable presentation IDs mapped to actual GLB roots; no device acquisition values are available yet.
+export type BottlingDevice = { id: string; name: string; nodeName: string; task: string }
+// Stable presentation IDs mapped to actual GLB roots. Display setpoints live in equipmentReadings.ts.
 export const bottlingDevices: BottlingDevice[] = [
-  { id: 'GZ-T01', name: '上料机', nodeName: 'EQ_BOT_001_LOADER', task: '空瓶上料与输送', metrics: [
-    { id: 'feed', label: '上料节拍', unit: '瓶/min', target: '生产定额 · 待核定', range: '随瓶型与全线节拍验收' },
-    { id: 'belt', label: '输送速度', unit: 'm/min', target: '设备设定 · 待标定', range: '以稳瓶、不堆瓶为校核条件' },
-    { id: 'jam', label: '堵瓶次数', unit: '次', target: '运行读数 · 待接入', range: '按光电与停机事件记录' },
-  ], record: '已登记上料机模型；出料输送面标高 1.55 m，接入变高输送段。' },
-  { id: 'GZ-T02', name: '酒瓶质检机', nodeName: 'EQ_BOT_005_INSPECTOR', task: '空瓶外观与缺陷检查', metrics: [
-    { id: 'checked', label: '检查数量', unit: '瓶', target: '生产定额 · 随批次核定', range: '以过瓶计数为准' },
-    { id: 'reject', label: '剔除数量', unit: '瓶', target: '工艺要求 · 缺陷瓶隔离', range: '缺陷分类与阈值待确认' },
-    { id: 'rate', label: '检查节拍', unit: '瓶/min', target: '设备设定 · 待标定', range: '依瓶型与检测覆盖率确定' },
-  ], record: '已登记质检机模型；进出瓶接口标高均为 0.95 m。' },
-  { id: 'GZ-T03', name: '环形灌装机', nodeName: 'EQ_BOT_002_ROTARY_FILLER', task: '酒液定量灌装', metrics: [
-    { id: 'volume', label: '灌装净含量', unit: 'mL', target: '工艺要求 · 批均值 ≥ 标注量', range: '单件允许短缺按总局令70号判定' },
-    { id: 'flow', label: '灌装节拍', unit: '瓶/min', target: '生产定额 · 待核定', range: '随瓶容、酒液与阀组验收' },
-    { id: 'temperature', label: '酒液温度', unit: '°C', target: '工艺设定 · 待确认', range: '冷、热灌装路线分别核定' },
-  ], record: '已登记环形灌装机模型；酒液、CIP 与气源接口保留，公用管网待接。' },
-  { id: 'GZ-T04', name: '高温杀菌机', nodeName: 'EQ_BOT_006_STERILIZER', task: '瓶装酒热处理', metrics: [
-    { id: 'temperature', label: '杀菌区温度', unit: '°C', target: '工艺参考 · 82–85 °C', range: '仅冷灌装后封盖路线；非设备设定' },
-    { id: 'pu', label: '累计杀菌强度', unit: 'PU', target: '工艺参考 · 总 PU > 30', range: 'CN105523515A；须验证温度历程' },
-    { id: 'speed', label: '输送速度', unit: 'm/min', target: '设备设定 · 待热工验证', range: '由瓶型、温区与停留时间确定' },
-  ], record: '已登记 12.8 m 机内输送带；模型杀菌→旋盖顺序待工艺复核。' },
-  { id: 'GZ-T05', name: '旋盖机', nodeName: 'EQ_BOT_007_CAPPER', task: '瓶盖旋紧与封口', metrics: [
-    { id: 'torque', label: '旋盖扭矩', unit: 'N·m', target: '工艺要求 · 按瓶盖规范', range: '结合盖型、垫片与密封试验确认' },
-    { id: 'missing', label: '缺盖数量', unit: '瓶', target: '工艺要求 · 缺盖瓶隔离', range: '检测点与剔除联锁待接入' },
-    { id: 'speed', label: '旋盖节拍', unit: '瓶/min', target: '生产定额 · 待核定', range: '按瓶盖组合与整线联动验收' },
-  ], record: '已登记旋盖机模型；进出瓶标高 1.02 m，保留双星轮交接。' },
-  { id: 'GZ-T06', name: '装箱机', nodeName: 'EQ_BOT_008_CASE_PACKER', task: '成品装箱与交接', metrics: [
-    { id: 'cases', label: '装箱数量', unit: '箱', target: '生产定额 · 待核定', range: '箱规与合格箱计数接口待确认' },
-    { id: 'rate', label: '装箱节拍', unit: '箱/min', target: '设备设定 · 待验收', range: '按瓶型、箱规与抓取节拍确定' },
-    { id: 'count', label: '单箱瓶数', unit: '瓶/箱', target: '包装要求 · 按产品箱规', range: '不以模型夹持阵列推断箱规' },
-  ], record: '已登记装箱机模型；瓶体与成箱出口保留 0.76 m 横向偏置。' },
+  { id: 'GZ-T01', name: '上料机', nodeName: 'EQ_BOT_001_LOADER', task: '空瓶上料与输送' },
+  { id: 'GZ-T02', name: '酒瓶质检机', nodeName: 'EQ_BOT_005_INSPECTOR', task: '空瓶外观与缺陷检查' },
+  { id: 'GZ-T03', name: '环形灌装机', nodeName: 'EQ_BOT_002_ROTARY_FILLER', task: '酒液定量灌装' },
+  { id: 'GZ-T04', name: '高温杀菌机', nodeName: 'EQ_BOT_006_STERILIZER', task: '瓶装酒热处理' },
+  { id: 'GZ-T05', name: '旋盖机', nodeName: 'EQ_BOT_007_CAPPER', task: '瓶盖旋紧与封口' },
+  { id: 'GZ-T06', name: '装箱机', nodeName: 'EQ_BOT_008_CASE_PACKER', task: '成品装箱与交接' },
 ]
+
+export type FermentationZone = 'pre' | 'post'
+export const fermentationZones = [
+  { id: 'pre' as const, name: '前发酵区', count: 8 },
+  { id: 'post' as const, name: '后发酵区', count: 24 },
+]
+// Registry points at actual independent tank roots in the assembled GLBs.
+export const fermentationDevices = fermentationZones.flatMap(zone => Array.from({ length: zone.count }, (_, index) => {
+  const number = String(index + 1).padStart(2, '0'), pre = zone.id === 'pre'
+  return {
+    id: `${pre ? 'QF' : 'HF'}-T${number}`, zone: zone.id,
+    name: `${index + 1}# ${pre ? '前发酵罐' : '后发酵罐'}`,
+    nodeName: `EQ_FER_${pre ? '009' : '010'}_${index === 0 ? 'SINGLE' : `T${number}`}`,
+    task: pre ? '糖化与前发酵管理' : '后发酵与成熟管理',
+  }
+}))
+
+// One existing static press; real process feed is a pipe, not the reserved conveyor sockets.
+export const pressDevices: BottlingDevice[] = [{
+  id: 'YZ-T01', name: '1# 板框压榨机', nodeName: 'EQ_PRS_003_FILTER_PRESS', task: '酒醪压榨与固液分离' }]
